@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { peliculas } from '../data/Pelicula';
+import SearchBar from "./SearchBar.jsx";
 
-const CatalogoPelicula = () => {
+const MovieCatalog = () => {
     const novedades = peliculas.sort((a, b) => new Date(b.fecha_salida) - new Date(a.fecha_salida));
     const peliculasOrdenadas = novedades; // Misma lista para el carrusel y el listado
 
@@ -11,7 +12,7 @@ const CatalogoPelicula = () => {
                 <div className="container mx-auto px-6 py-8">
                     <div className="text-center mb-8">
                         <h1 className="text-4xl font-bold text-foreground mb-3">
-                            CineCatalog
+                            Cine Cloud
                         </h1>
                         <p className="text-muted-foreground text-lg">
                             Descubre las últimas novedades en películas
@@ -19,46 +20,61 @@ const CatalogoPelicula = () => {
                     </div>
 
                     {/* Search and Filters */}
-                    <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
-                        <div className="relative flex-1">
-                            <div
-                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4"/>
-                            <input
-                                placeholder="Buscar películas..."
-                                className="pl-10"
-                            />
-                        </div>
-                        <button variant="outline" className="flex items-center gap-2">
-                            <filter className="w-4 h-4"/>
-                            Filtros
-                        </button>
-                    </div>
+                    <SearchBar />
                 </div>
             </div>
 
-            <h1 className="text-2xl font-bold text-accent mb-4">Últimas Novedades</h1>
+            <h1 className="text-2xl font-bold text-secondary mb-4">Últimas Novedades</h1>
 
             <div className="carousel w-full rounded-box mb-8">
-                {novedades.slice(0, 4).map((pelicula, index) => (
-                    <div key={pelicula.id} id={`slide${index + 1}`} className="carousel-item relative w-full">
-                        <Link to={`/pelicula/${pelicula.id}`} className="block w-full">
-                            <img
-                                src={pelicula.imagen_ampliada}
-                                className="w-full h-96 object-cover rounded-box"
-                                alt={pelicula.titulo}
-                            />
-                        </Link>
+                {Array.from({length: Math.ceil(novedades.length / 3)}).map((_, slideIndex) => {
+                    const start = slideIndex * 3;
+                    const group = novedades.slice(start, start + 3);
+
+                    return (
                         <div
-                            className="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
-                            <a href={`#slide${index === 0 ? novedades.length : index}`} className="btn btn-circle">❮</a>
-                            <a href={`#slide${index === novedades.length - 1 ? 1 : index + 2}`}
-                               className="btn btn-circle">❯</a>
+                            key={slideIndex}
+                            id={`slide${slideIndex + 1}`}
+                            className="carousel-item relative w-full"
+                        >
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+                                {group.map((pelicula) => (
+                                    <Link
+                                        key={pelicula.id}
+                                        to={`/pelicula/${pelicula.id}`}
+                                        className="block"
+                                    >
+                                        <img
+                                            src={pelicula.imagen_ampliada}
+                                            className="w-full h-96 object-cover rounded-box"
+                                            alt={pelicula.titulo}
+                                        />
+                                    </Link>
+                                ))}
+                            </div>
+
+                            {/* Botones de navegación */}
+                            <div
+                                className="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
+                                <a
+                                    href={`#slide${slideIndex === 0 ? Math.ceil(novedades.length / 3) : slideIndex}`}
+                                    className="btn btn-circle"
+                                >
+                                    ❮
+                                </a>
+                                <a
+                                    href={`#slide${slideIndex === Math.ceil(novedades.length / 3) - 1 ? 1 : slideIndex + 2}`}
+                                    className="btn btn-circle"
+                                >
+                                    ❯
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
-            <h2 className="text-2xl font-bold text-accent mb-4 mt-8">Catálogo Completo</h2>
+            <h2 className="text-2xl font-bold text-secondary mb-4 mt-8">Catálogo Completo</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {peliculasOrdenadas.map(pelicula => (
                     <Link to={`/pelicula/${pelicula.id}`} key={pelicula.id}
@@ -92,4 +108,4 @@ const CatalogoPelicula = () => {
     );
 };
 
-export default CatalogoPelicula;
+export default MovieCatalog;

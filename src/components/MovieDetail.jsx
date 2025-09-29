@@ -1,7 +1,8 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { peliculas } from '../data/Pelicula';
-import { FaStar } from 'react-icons/fa'; // Instala react-icons para los íconos de estrella
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faHeart, faShareNodes} from "@fortawesome/free-solid-svg-icons";
 
 const MovieDetail = () => {
     const { id } = useParams();
@@ -16,11 +17,19 @@ const MovieDetail = () => {
         const stars = [];
         for (let i = 0; i < 5; i++) {
             stars.push(
-                <FaStar key={i} className={i < Math.floor(rating) ? "text-yellow-400" : "text-yellow-300"} />
+                <input
+                    key={i}
+                    type="radio"
+                    name="rating"
+                    className="mask mask-star-2 bg-orange-400 "
+                    aria-label={`${i + 1} star`}
+                    checked={i < rating}
+                />
             );
         }
-        return stars;
+        return <div className="rating rating-lg">{stars}</div>;
     };
+
 
     return (
         <div className="container mx-auto p-4">
@@ -38,13 +47,13 @@ const MovieDetail = () => {
                         <div className="flex gap-2">
                             {/* Favorito */}
                             <button
-                                className="btn flex-1 btn-outline btn-secondary rounded-full hover:bg-primary hover:text-primary-content">
-                                ♥
+                                className="btn flex-1 btn-outline btn-secondary rounded-full hover:text-primary-content">
+                                <FontAwesomeIcon icon={faHeart} />
                             </button>
                             {/* Compartir */}
                             <button
-                                className="btn flex-1 btn-outline btn-secondary rounded-full hover:bg-accent hover:text-accent-content">
-                                ⤴
+                                className="btn flex-1 btn-outline btn-accent rounded-full hover:bg-accent hover:text-accent-content">
+                                <FontAwesomeIcon icon={faShareNodes} />
                             </button>
                         </div>
                     </div>
@@ -59,7 +68,7 @@ const MovieDetail = () => {
                     <p className="text-gray-500 mb-4">Fecha de salida: {pelicula.fecha_salida} | Formato: {pelicula.formato}</p>
                     <div className="flex items-center gap-2 mb-4">
                         <span className="text-xl font-bold text-primary">${pelicula.precio}</span>
-                        <div className="rating rating-sm">
+                        <div>
                             {renderStars(pelicula.rating)}
                         </div>
                         <span className="text-sm text-gray-500">({pelicula.rating} de 5 estrellas)</span>
