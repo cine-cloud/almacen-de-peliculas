@@ -11,4 +11,21 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    port: 3000,
+    proxy: {
+      '/auth': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/realms': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/admin': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      }
+    }
+  }
 });
