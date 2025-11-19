@@ -1,65 +1,40 @@
 import {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
 import SearchBar from "../shared/SearchBar.jsx";
-import {catalogoService} from '@/services/catalogoService';
+import {peliculaService} from '@/services/peliculaService';
 import { useKeycloak} from "@/hooks/useKeycloak.js";
 
 const MovieCatalog = () => {
-    const [catalogos, setCatalogos] = useState([]);
+    const [peliculas, setPeliculas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { keycloak, initialized, authenticated } = useKeycloak();
+    const { keycloak, initialized } = useKeycloak();
 
     useEffect(() => {
-        // Esperar a que Keycloak esté inicializado antes de cargar datos
-        if (!initialized || !authenticated) {
-            return;
-        }
-
+        // No esperar autenticación - cargar siempre
         const cargarCatalogos = async () => {
             try {
                 setLoading(true);
-                const data = await catalogoService.listar();
-                setCatalogos(data);
+                const data = await peliculaService.listar();
+                setPeliculas(data);
             } catch (err) {
                 console.error('Error al cargar catálogos:', err);
-
-                // Si es error 401/403, el interceptor ya maneja el login
-                if (err.response?.status !== 401 && err.response?.status !== 403) {
-                    setError('Error al cargar el catálogo');
-                }
+                setError('Error al cargar el catálogo');
             } finally {
                 setLoading(false);
             }
         };
 
         cargarCatalogos();
-    }, [initialized, authenticated]);
+    }, []); // Eliminada la dependencia de authenticated
 
-    // Mostrar loading mientras Keycloak se inicializa
-    if (!initialized || !authenticated) {
+    // Solo esperar inicialización de Keycloak, no autenticación
+    if (!initialized) {
         return (
             <div className="container mx-auto p-4">
                 <div className="flex justify-center items-center min-h-64">
                     <div className="loading loading-spinner loading-lg text-primary"></div>
                     <span className="ml-2">Inicializando...</span>
-                </div>
-            </div>
-        );
-    }
-
-    // Si hay error de autenticación, mostrar mensaje apropiado
-    if (error && !authenticated) {
-        return (
-            <div className="container mx-auto p-4">
-                <div className="alert alert-warning text-center">
-                    <p>Por favor, inicia sesión para ver el catálogo</p>
-                    <button
-                        onClick={() => keycloak.login()}
-                        className="btn btn-primary mt-2"
-                    >
-                        Iniciar Sesión
-                    </button>
                 </div>
             </div>
         );
@@ -87,12 +62,7 @@ const MovieCatalog = () => {
     }
 
     // Aplanar todas las películas de todos los catálogos
-    const todasLasPeliculas = catalogos.flatMap(catalogo =>
-        catalogo.peliculas?.map(pelicula => ({
-            ...pelicula,
-            catalogoNombre: catalogo.nombre
-        })) || []
-    );
+    const todasLasPeliculas = peliculas || [];
 
     const novedades = [...todasLasPeliculas].sort((a, b) =>
         new Date(b.fechaSalida) - new Date(a.fechaSalida)
@@ -100,10 +70,10 @@ const MovieCatalog = () => {
 
     return (
         <div className="container mx-auto p-4">
-            <div className="bg-card border-b border-border">
+            <div className="bg-card border-border">
                 <div className="container mx-auto px-6 py-8">
                     <div className="text-center mb-8">
-                        <h1 className="text-4xl font-bold text-foreground mb-3">
+                        <h1 className="text-4xl font-bold text-primary mb-3">
                             Cine Cloud
                         </h1>
                         <p className="text-muted-foreground text-lg">
@@ -121,6 +91,25 @@ const MovieCatalog = () => {
                     <SearchBar />
                 </div>
             </div>
+
+            {/* Sección de bienvenida para usuarios no autenticados */}
+            {!keycloak.authenticated && (
+                <div className="alert alert-info alert-soft mb-6">
+                    <div className="flex items-center justify-between" style={{ 'font-size': '1rem'}}>
+                        <div>
+                            <span className="font-bold text-primary">¡Bienvenido!</span>
+                            <span className="ml-2 text-primary">Explora nuestro catálogo. Inicia sesión para más funciones.</span>
+                        </div>
+                        <button
+                            onClick={() => keycloak.login()}
+                            style={{ 'font-size': '1rem'}}
+                            className="btn btn-ghost btn-sm text-primary"
+                        >
+                            Iniciar Sesión
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <h1 className="text-2xl font-bold text-secondary mb-4">Últimas Novedades</h1>
 
@@ -172,10 +161,10 @@ const MovieCatalog = () => {
             </div>
 
             <h2 className="text-2xl font-bold text-secondary mb-4 mt-8">Catálogo Completo</h2>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {todasLasPeliculas.map(pelicula => (
-                    <Link
-                        to={`/pelicula/${pelicula.peliculaId}`}
+                    <div
                         key={pelicula.peliculaId}
                         className="card bg-neutral shadow-xl rounded-2xl transition-transform duration-300 transform hover:scale-105"
                     >
@@ -200,11 +189,27 @@ const MovieCatalog = () => {
                                 <span className="font-semibold">Actores:</span> {pelicula.actores?.slice(0, 3).join(', ')}...
                             </div>
                             <div className="flex justify-between items-center mt-4">
-                                <button className="btn btn-primary rounded-full btn-sm">Ver ahora</button>
-                                <button className="btn btn-outline btn-secondary rounded-full btn-sm">Más info</button>
+                                <Link
+                                    to={`/pelicula/${pelicula.peliculaId}`}
+                                    className="btn btn-primary rounded-full btn-sm"
+                                >
+                                    Ver detalles
+                                </Link>
+                                {!keycloak.authenticated ? (
+                                    <button
+                                        onClick={() => keycloak.login()}
+                                        className="btn btn-outline btn-secondary rounded-full btn-sm"
+                                    >
+                                        Iniciar sesión
+                                    </button>
+                                ) : (
+                                    <button className="btn btn-outline btn-secondary rounded-full btn-sm">
+                                        Comprar
+                                    </button>
+                                )}
                             </div>
                         </div>
-                    </Link>
+                    </div>
                 ))}
             </div>
         </div>

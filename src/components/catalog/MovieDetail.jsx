@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHeart, faShareNodes } from "@fortawesome/free-solid-svg-icons";
+import { faHeart, faShareNodes, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { peliculaService } from '@/services/peliculaService';
+import { useCart } from '@/hooks/useCart.jsx';
 
 const MovieDetail = () => {
     const { id } = useParams();
     const [pelicula, setPelicula] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const { addToCart } = useCart();
 
     useEffect(() => {
         const cargarPelicula = async () => {
@@ -28,6 +31,16 @@ const MovieDetail = () => {
             cargarPelicula();
         }
     }, [id]);
+
+    const handleAddToCart = () => {
+        addToCart(pelicula);
+        setShowSuccess(true);
+
+        // Ocultar el mensaje después de 3 segundos
+        setTimeout(() => {
+            setShowSuccess(false);
+        }, 3000);
+    };
 
     // Helper para generar estrellas de rating
     const renderStars = (rating) => {
@@ -71,7 +84,18 @@ const MovieDetail = () => {
 
     return (
         <div className="container mx-auto p-4">
+            {/* Notificación de éxito */}
+            {showSuccess && (
+                <div className="toast toast-top toast-end z-50">
+                    <div className="alert alert-success alert-soft flex">
+                        <FontAwesomeIcon icon={faCheckCircle} className="text-lg" />
+                        <span className="font-semibold">¡Se ha añadido al carrito!</span>
+                    </div>
+                </div>
+            )}
+
             <Link to="/" className="btn btn-ghost mb-4 text-primary">&larr; Volver al catálogo</Link>
+
             <div className="bg-neutral p-6 rounded-2xl shadow-xl lg:flex lg:gap-8">
                 <div className="lg:w-1/3">
                     <img
@@ -81,7 +105,10 @@ const MovieDetail = () => {
                     />
                     <div className="flex flex-col gap-2 mt-4">
                         <button className="btn btn-primary rounded-full">Ver ahora</button>
-                        <button className="btn btn-outline btn-secondary rounded-full">
+                        <button
+                            className="btn btn-outline btn-secondary rounded-full"
+                            onClick={handleAddToCart}
+                        >
                             Añadir al carrito
                         </button>
 

@@ -4,7 +4,7 @@ export const catalogoService = {
     // Listar todos los catálogos
     async listar() {
         try {
-            const response = await api.get('/catalogos');
+            const response = await api.get('/peliculas');
             return response.data;
         } catch (error) {
             console.error('Error al listar catálogos:', error);

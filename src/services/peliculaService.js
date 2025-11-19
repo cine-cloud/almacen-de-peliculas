@@ -1,6 +1,19 @@
 import api from './api';
 
 export const peliculaService = {
+
+    // Listar todas las películas
+
+    listar: async () => {
+        try {
+            const response = await api.get('/peliculas');
+            return response.data;
+        } catch (error) {
+            console.error('Error al listar películas:', error);
+            throw error;
+        }
+    },
+
     // Obtener detalle de una película
     obtenerDetalle: async (id) => {
         try {

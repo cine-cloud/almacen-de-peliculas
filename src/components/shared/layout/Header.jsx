@@ -1,12 +1,16 @@
-import React, { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faSignOutAlt, faSignInAlt, faUserPlus, faFilm, faCrown, faUsers } from "@fortawesome/free-solid-svg-icons";
+import React, {useState} from "react";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faCrown, faFilm, faSignOutAlt, faUser, faUsers, faSignInAlt, faUserPlus} from "@fortawesome/free-solid-svg-icons";
 import MovieForm from "@/components/catalog/MovieForm.jsx";
-import { useKeycloak } from "@/hooks/useKeycloak.js";
+import {useKeycloak} from "@/hooks/useKeycloak.js";
+import { faShoppingCart } from '@fortawesome/free-solid-svg-icons';
+import { useCart } from '@/hooks/useCart.jsx';
+import { Link } from 'react-router-dom';
 
 export default function Header() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { keycloak, initialized, authenticated, isAdmin, isCliente } = useKeycloak();
+    const { getCartItemsCount } = useCart();
 
     // Verificar permisos basados en Realm Roles
     const canAddMovies = initialized && authenticated && isAdmin();
@@ -39,6 +43,10 @@ export default function Header() {
         return (
             <header className="sticky top-0 z-10 bg-base-100 shadow-sm">
                 <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-4">
+                        <img src="/src/assets/logo-no-bg.png" alt="logo" className="h-8 w-auto" />
+                        <h1 className="text-2xl font-bold text-primary">Cine Cloud</h1>
+                    </div>
                     <div className="loading loading-spinner loading-sm"></div>
                 </div>
             </header>
@@ -50,7 +58,7 @@ export default function Header() {
             <div className="flex items-center justify-between p-4">
                 {/* Logo y título */}
                 <div className="flex items-center gap-4">
-                    <img src="/src/assets/logo.png" alt="logo" className="h-8 w-auto" />
+                    <img src="/src/assets/logo-no-bg.png" alt="logo" className="h-8 w-auto" />
                     <h1 className="text-2xl font-bold text-primary">Cine Cloud</h1>
                 </div>
 
@@ -65,6 +73,19 @@ export default function Header() {
                             Agregar Película
                         </button>
                     )}
+
+                    {/* Enlace al carrito - SIEMPRE visible */}
+                    <Link
+                        to="/carrito"
+                        className="btn btn-ghost btn-circle relative"
+                    >
+                        <FontAwesomeIcon icon={faShoppingCart} className="text-lg" />
+                        {getCartItemsCount() > 0 && (
+                            <span className="absolute -top-2 -right-2 badge badge-primary badge-sm">
+                                {getCartItemsCount()}
+                            </span>
+                        )}
+                    </Link>
 
                     {/* Información del usuario */}
                     {authenticated ? (
@@ -124,10 +145,21 @@ export default function Header() {
                             </ul>
                         </div>
                     ) : (
+                        // BOTONES PARA USUARIOS NO AUTENTICADOS
                         <div className="flex gap-2">
-                            <button onClick={handleLogout}>
-                                <FontAwesomeIcon icon={faSignOutAlt}/>
-                                Cerrar Sesión
+                            <button
+                                onClick={handleRegister}
+                                className="btn btn-outline btn-primary btn-sm flex items-center gap-2"
+                            >
+                                <FontAwesomeIcon icon={faUserPlus} />
+                                Registrarse
+                            </button>
+                            <button
+                                onClick={handleLogin}
+                                className="btn btn-primary btn-sm flex items-center gap-2"
+                            >
+                                <FontAwesomeIcon icon={faSignInAlt} />
+                                Iniciar Sesión
                             </button>
                         </div>
                     )}
