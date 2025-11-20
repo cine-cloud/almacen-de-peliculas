@@ -3,6 +3,7 @@ import {Link} from 'react-router-dom';
 import SearchBar from "../shared/SearchBar.jsx";
 import {peliculaService} from '@/services/peliculaService';
 import { useKeycloak} from "@/hooks/useKeycloak.js";
+import ImageWithFallback from '@/components/shared/ImageWithFallback.jsx';
 
 const MovieCatalog = () => {
     const [peliculas, setPeliculas] = useState([]);
@@ -132,11 +133,16 @@ const MovieCatalog = () => {
                                         to={`/pelicula/${pelicula.peliculaId}`}
                                         className="block"
                                     >
-                                        <img
-                                            src={'/src/assets/' + pelicula.imagenAmpliada || '/src/assets/movie-4.jpg'}
-                                            className="w-full h-96 object-cover rounded-box"
-                                            alt={pelicula.titulo}
-                                        />
+                                        <div className="relative">
+                                            <ImageWithFallback
+                                                src={pelicula.imagenAmpliada}
+                                                className="w-full h-96 object-cover rounded-box"
+                                                alt={pelicula.titulo}
+                                            />
+                                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-3 rounded-b-box">
+                                                <h3 className="text-lg font-bold">{pelicula.titulo}</h3>
+                                            </div>
+                                        </div>
                                     </Link>
                                 ))}
                             </div>
@@ -169,8 +175,8 @@ const MovieCatalog = () => {
                         className="card bg-neutral shadow-xl rounded-2xl transition-transform duration-300 transform hover:scale-105"
                     >
                         <figure className="relative h-64 overflow-hidden rounded-t-2xl">
-                            <img
-                                src={'/src/assets/' + pelicula.imagenAmpliada || '/src/assets/movie-4.jpg'}
+                            <ImageWithFallback
+                                src={pelicula.imagenAmpliada}
                                 alt={pelicula.titulo}
                                 className="w-full h-full object-cover"
                             />

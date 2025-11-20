@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faShareNodes, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { peliculaService } from '@/services/peliculaService';
 import { useCart } from '@/hooks/useCart.jsx';
+import ImageWithFallback from '@/components/shared/ImageWithFallback.jsx';
 
 const MovieDetail = () => {
     const { id } = useParams();
@@ -98,8 +99,8 @@ const MovieDetail = () => {
 
             <div className="bg-neutral p-6 rounded-2xl shadow-xl lg:flex lg:gap-8">
                 <div className="lg:w-1/3">
-                    <img
-                        src={'/src/assets/' + pelicula.imagenAmpliada || '/scr/assets/movie-4.jpg'}
+                    <ImageWithFallback
+                        src={pelicula.imagenAmpliada}
                         alt={pelicula.titulo}
                         className="w-full rounded-2xl shadow-lg mb-4"
                     />

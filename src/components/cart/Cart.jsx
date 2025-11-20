@@ -3,6 +3,7 @@ import { useKeycloak } from '@/hooks/useKeycloak.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlus, faMinus, faShoppingCart, faCreditCard, faTruck } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
+import ImageWithFallback from '@/components/shared/ImageWithFallback.jsx';
 
 const Cart = () => {
     const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
@@ -52,8 +53,8 @@ const Cart = () => {
                                 <div className="flex gap-4">
                                     {/* Imagen */}
                                     <div className="flex-shrink-0">
-                                        <img
-                                            src={'/src/assets/' + item.imagenAmpliada || '/src/assets/movie-4.jpg'}
+                                        <ImageWithFallback
+                                            src={item.imagenAmpliada}
                                             alt={item.titulo}
                                             className="w-24 h-32 object-cover rounded-lg shadow-md"
                                         />
