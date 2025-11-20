@@ -1,35 +1,32 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import KeycloakProvider from './hooks/KeycloakProvider.jsx';
+import MovieCatalog from './components/catalog/MovieCatalog.jsx';
+import MovieDetail from './components/catalog/MovieDetail.jsx';
+import Header from './components/shared/layout/Header.jsx';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faShareNodes } from '@fortawesome/free-solid-svg-icons';
+import { CartProvider } from '@/hooks/useCart.jsx';
+import Cart from './components/cart/Cart.jsx';
+
+library.add(faShareNodes);
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    return (
+        <KeycloakProvider>
+            <CartProvider>
+                <Router>
+                    <Header />
+                    <div className="bg-base-100 text-base-content min-h-screen">
+                        <Routes>
+                            <Route path="/" element={<MovieCatalog />} />
+                            <Route path="/pelicula/:id" element={<MovieDetail />} />
+                            <Route path="/carrito" element={<Cart />} />
+                        </Routes>
+                    </div>
+                </Router>
+            </CartProvider>
+        </KeycloakProvider>
+    );
 }
 
-export default App
+export default App;
