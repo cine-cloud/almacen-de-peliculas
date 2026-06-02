@@ -42,10 +42,10 @@ export default function Header() {
     if (!initialized) {
         return (
             <header className="sticky top-0 z-10 bg-base-100 shadow-sm">
-                <div className="flex items-center justify-between p-4">
+                <div className="flex items-center justify-between px-4 py-1">
                     <div className="flex items-center gap-4">
-                        <img src="/src/assets/logo-no-bg.png" alt="logo" className="h-8 w-auto" />
-                        <h1 className="text-2xl font-bold text-primary">Cine Cloud</h1>
+                        <img src="/src/assets/Logo-cinecloud.png" alt="Logo Cine Cloud" className="h-20 w-auto" />
+                        
                     </div>
                     <div className="loading loading-spinner loading-sm"></div>
                 </div>
@@ -55,11 +55,11 @@ export default function Header() {
 
     return (
         <header className="sticky top-0 z-10 bg-base-100 shadow-sm">
-            <div className="flex items-center justify-between p-4">
+            <div className="flex items-center justify-between px-4 py-1">
                 {/* Logo y título */}
                 <div className="flex items-center gap-4">
-                    <img src="/src/assets/logo-no-bg.png" alt="logo" className="h-8 w-auto" />
-                    <h1 className="text-2xl font-bold text-primary">Cine Cloud</h1>
+                    <img src="/src/assets/Logo-cinecloud.png" alt="Logo Cine Cloud" className="h-20 w-auto" />
+                    
                 </div>
 
                 <div className="flex items-center gap-4">

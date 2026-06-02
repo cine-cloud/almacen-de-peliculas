@@ -3,6 +3,7 @@ import {Link} from 'react-router-dom';
 import SearchBar from "../shared/SearchBar.jsx";
 import {peliculaService} from '@/services/peliculaService';
 import { useKeycloak} from "@/hooks/useKeycloak.js";
+import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
 
 const MovieCatalog = () => {
     const [peliculas, setPeliculas] = useState([]);
@@ -133,9 +134,12 @@ const MovieCatalog = () => {
                                         className="block"
                                     >
                                         <img
-                                            src={'/src/assets/' + pelicula.imagenAmpliada || '/src/assets/movie-4.jpg'}
-                                            className="w-full h-96 object-cover rounded-box"
-                                            alt={pelicula.titulo}
+                                          src={pelicula.imagenAmpliada || imagenNoDisponible}
+                                          alt={pelicula.titulo}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                             e.target.src = imagenNoDisponible;
+                                          }}
                                         />
                                     </Link>
                                 ))}
@@ -169,11 +173,14 @@ const MovieCatalog = () => {
                         className="card bg-neutral shadow-xl rounded-2xl transition-transform duration-300 transform hover:scale-105"
                     >
                         <figure className="relative h-64 overflow-hidden rounded-t-2xl">
-                            <img
-                                src={'/src/assets/' + pelicula.imagenAmpliada || '/src/assets/movie-4.jpg'}
-                                alt={pelicula.titulo}
-                                className="w-full h-full object-cover"
-                            />
+                        <img
+                          src={pelicula.imagenAmpliada || imagenNoDisponible}
+                          alt={pelicula.titulo}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                             e.target.src = imagenNoDisponible;
+                          }}
+                        />
                             <div className="badge badge-primary absolute top-2 right-2 text-xs font-semibold">
                                 Novedad
                             </div>
