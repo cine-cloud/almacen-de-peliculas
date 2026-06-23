@@ -3,10 +3,58 @@ import { useKeycloak } from '@/hooks/useKeycloak.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlus, faMinus, faShoppingCart, faCreditCard, faTruck } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
+import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
+import { carritoService } from "@/services/carritoService";
+
 
 const Cart = () => {
     const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
     const { authenticated, login } = useKeycloak();
+    
+    const procesarPago = async () => {
+    try {
+
+        const usuarioId = "evangelina";
+
+        console.log("Creando carrito...");
+        const carrito = await carritoService.crearCarrito(usuarioId);
+        console.log("Carrito creado:", carrito);
+
+        for (const item of cart) {
+
+            console.log("Agregando item:", item);
+
+            const resultado = await carritoService.agregarItem(
+                carrito.id,
+                item.peliculaId,
+                item.quantity
+            );
+
+            console.log("Item agregado:", resultado);
+        }
+
+        console.log("Ejecutando checkout...");
+
+        const compra = await carritoService.checkout(carrito.id);
+
+        console.log("Checkout OK:", compra);
+
+        alert("Compra realizada correctamente");
+
+        clearCart();
+
+    } catch (error) {
+
+        console.error("ERROR COMPLETO:", error);
+
+        if (error.response) {
+            console.log("STATUS:", error.response.status);
+            console.log("DATA:", error.response.data);
+        }
+
+        alert("Error al procesar la compra");
+    }
+};
 
     // Calcular IVA (21%)
     const calculateIVA = () => {
@@ -53,9 +101,12 @@ const Cart = () => {
                                     {/* Imagen */}
                                     <div className="flex-shrink-0">
                                         <img
-                                            src={'/src/assets/' + item.imagenAmpliada || '/src/assets/movie-4.jpg'}
+                                            src={item.imagenAmpliada || imagenNoDisponible}
                                             alt={item.titulo}
                                             className="w-24 h-32 object-cover rounded-lg shadow-md"
+                                            onError={(e) => {
+                                                e.target.src = imagenNoDisponible;
+                                            }}
                                         />
                                     </div>
 
@@ -168,18 +219,15 @@ const Cart = () => {
 
                             {/* Botón de pago */}
                             {authenticated ? (
-                                <button className="btn btn-primary btn-block text-lg font-semibold py-3">
-                                    <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
-                                    Proceder al Pago
-                                </button>
+                            <button
+                                onClick={procesarPago}
+                                className="btn btn-primary btn-block text-lg font-semibold py-3"
+                            >
+                                <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
+                                Proceder al Pago
+                            </button>
                             ) : (
-                                <button
-                                    onClick={login}
-                                    className="btn btn-primary btn-block text-lg font-semibold py-3"
-                                >
-                                    <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
-                                    Iniciar Sesión para Comprar
-                                </button>
+                                   <p>El carrito está vacío</p>
                             )}
 
                             {/* Envío gratuito */}

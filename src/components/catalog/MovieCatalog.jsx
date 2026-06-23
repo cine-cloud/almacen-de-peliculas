@@ -4,12 +4,14 @@ import SearchBar from "../shared/SearchBar.jsx";
 import {peliculaService} from '@/services/peliculaService';
 import { useKeycloak} from "@/hooks/useKeycloak.js";
 import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
+import { useCart } from '@/hooks/useCart.jsx';
 
 const MovieCatalog = () => {
     const [peliculas, setPeliculas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { keycloak, initialized } = useKeycloak();
+    const { addToCart } = useCart();
 
     useEffect(() => {
         // No esperar autenticación - cargar siempre
@@ -210,9 +212,14 @@ const MovieCatalog = () => {
                                         Iniciar sesión
                                     </button>
                                 ) : (
-                                    <button className="btn btn-outline btn-secondary rounded-full btn-sm">
-                                        Comprar
-                                    </button>
+                                    <button
+                                         onClick={() => addToCart(pelicula)}
+                                         className="btn btn-outline btn-secondary rounded-full btn-sm"
+                                    
+                                        >
+                                            Comprar
+                                    </button>                 
+
                                 )}
                             </div>
                         </div>
