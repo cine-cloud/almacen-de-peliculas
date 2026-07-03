@@ -7,24 +7,48 @@ function HistorialCompras() {
 
   const { keycloak, authenticated } = useContext(KeycloakContext);
 
+  const [loading, setLoading] = useState(false);
+
+
+
   useEffect(() => {
-    if (!authenticated) return;
+
+    if (!authenticated) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
 
     const usuarioId = keycloak.tokenParsed?.preferred_username;
 
-    console.log("Usuario autenticado:", usuarioId);
-
     fetch(`http://localhost:8083/historial/${usuarioId}`)
-      .then((response) => {
-        console.log("status:", response.status);
-        return response.json();
-      })
-      .then((data) => {
-        console.log("datos recibidos:", data);
+      .then(response => response.json())
+      .then(data => {
         setCompras(data);
       })
-      .catch((error) => console.error("Error obteniendo historial:", error));
+      .catch(error => {
+        console.error("Error obteniendo historial:", error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+
   }, [authenticated, keycloak]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center mt-20 gap-6">
+
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+
+        <h2 className="text-2xl font-semibold">
+          Cargando historial de compras...
+        </h2>
+
+      </div>
+    );
+  }
 
   if (!authenticated) {
     return (
@@ -44,6 +68,13 @@ function HistorialCompras() {
 
   return (
     <div className="p-6">
+
+      <div className="mb-4">
+        <Link to="/" className="btn btn-outline btn-sm">
+          ← Volver al catálogo
+        </Link>
+      </div>
+
       <h2 className="text-3xl font-bold mb-6">Historial de Compras</h2>
 
       {compras.length === 0 ? (
@@ -65,8 +96,8 @@ function HistorialCompras() {
           </div>
         </div>
       ) : (
-        compras.map((compra, index) => (
-          <div key={index} className="card bg-base-200 shadow-xl mb-4 p-4">
+        compras.map((compra) => (
+          <div key={compra.id} className="card bg-base-200 shadow-xl mb-4 p-4">
             <h4 className="font-bold">
               Fecha: {new Date(compra.fechaTransaccion).toLocaleString()}
             </h4>
@@ -78,18 +109,37 @@ function HistorialCompras() {
             <hr className="my-3" />
 
             <div className="mt-4">
-              <h5 className="font-semibold">Películas:</h5>
+              <h5 className="font-semibold mb-4">Películas:</h5>
 
-              <ul className="list-disc pl-6">
-                {compra.items?.map((item, i) => (
-                  <li key={i}>
-                    🎬 {item.tituloSnapshot}
-                    {" - $"}
-                    {item.precioUnitario}
-                    {" | Cantidad: "}
-                    {item.cantidad}
-                  </li>
-                ))}
+              <ul>
+                {compra.items?.map((item, i) => {
+                  console.log("Imagen recibida:", item.imagenUrl);
+                  console.log(compra.fechaTransaccion);
+                  return (
+                    <li key={i} className="flex items-center gap-4 mb-4">
+                      <img
+                        src={item.imagenUrl}
+                        alt={item.tituloSnapshot}
+                        className="w-20 h-28 object-cover rounded shadow border"
+                        onError={(e) => {
+                          console.log("Error cargando imagen:", item.imagenUrl);
+
+                          // Imagen temporal para depuración
+                          e.target.src =
+                            "https://placehold.co/200x300?text=Sin+Imagen";
+                        }}
+                      />
+
+                      <div>
+                        <p className="font-semibold">{item.tituloSnapshot}</p>
+
+                        <p>Precio: ${item.precioUnitario}</p>
+
+                        <p>Cantidad: {item.cantidad}</p>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>

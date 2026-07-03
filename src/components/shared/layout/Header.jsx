@@ -7,6 +7,7 @@ import { faShoppingCart } from '@fortawesome/free-solid-svg-icons';
 import { useCart } from '@/hooks/useCart.jsx';
 import { Link } from 'react-router-dom';
 
+
 export default function Header() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { keycloak, initialized, authenticated, isAdmin, isCliente } = useKeycloak();
@@ -32,7 +33,10 @@ export default function Header() {
     };
 
     const handleLogout = () => {
-        keycloak.logout();
+      localStorage.removeItem("carritoId");
+      keycloak.logout({
+        redirectUri: window.location.origin,
+      });
     };
 
     const handleAccountManagement = () => {
@@ -41,29 +45,34 @@ export default function Header() {
 
     if (!initialized) {
         return (
-            <header className="sticky top-0 z-10 bg-base-100 shadow-sm">
-                <div className="flex items-center justify-between px-4 py-1">
-                    <div className="flex items-center gap-4">
-                        <img src="/src/assets/Logo-cinecloud.png" alt="Logo Cine Cloud" className="h-20 w-auto" />
-                        
-                    </div>
-                    <div className="loading loading-spinner loading-sm"></div>
-                </div>
-            </header>
+          <header className="sticky top-0 z-10 bg-base-100 shadow-sm">
+            <div className="flex items-center justify-between px-4 py-1">
+              {/* Logo y título */}
+              <Link to="/" className="flex items-center gap-4">
+                <img
+                  src="/src/assets/Logo-cinecloud.png"
+                  alt="Logo Cine Cloud"
+                  className="h-20 w-auto cursor-pointer"
+                />
+              </Link>
+              <div className="loading loading-spinner loading-sm"></div>
+            </div>
+          </header>
         );
     }
 
     return (
       <header className="sticky top-0 z-10 bg-base-100 shadow-sm">
         <div className="flex items-center justify-between px-4 py-1">
+         
           {/* Logo y título */}
-          <div className="flex items-center gap-4">
+          <Link to="/" className="flex items-center gap-4">
             <img
               src="/src/assets/Logo-cinecloud.png"
               alt="Logo Cine Cloud"
-              className="h-20 w-auto"
+              className="h-20 w-auto cursor-pointer"
             />
-          </div>
+          </Link>
 
           <div className="flex items-center gap-4">
             {/* Botón para agregar película - Solo admin puede agregar */}
@@ -89,12 +98,12 @@ export default function Header() {
 
             {/* BOTÓN HISTORIAL */}
             {authenticated && (
-            <Link
+              <Link
                 to="/historial"
-                className="btn btn-ghost"
-            >
+                className="btn btn-outline btn-primary btn-sm"
+              >
                 Historial
-            </Link>
+              </Link>
             )}
 
             {/* Información del usuario */}

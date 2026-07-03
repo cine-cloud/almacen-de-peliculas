@@ -203,24 +203,13 @@ const MovieCatalog = () => {
                                     className="btn btn-primary rounded-full btn-sm"
                                 >
                                     Ver detalles
-                                </Link>
-                                {!keycloak.authenticated ? (
-                                    <button
-                                        onClick={() => keycloak.login()}
-                                        className="btn btn-outline btn-secondary rounded-full btn-sm"
-                                    >
-                                        Iniciar sesión
-                                    </button>
-                                ) : (
-                                    <button
-                                         onClick={() => addToCart(pelicula)}
-                                         className="btn btn-outline btn-secondary rounded-full btn-sm"
-                                    
-                                        >
-                                            Comprar
-                                    </button>                 
-
-                                )}
+                                </Link>                                      
+                                <button
+                                    onClick={() => addToCart(pelicula)}
+                                    className="btn btn-outline btn-secondary rounded-full btn-sm"                                    
+                                >
+                                    Comprar
+                                </button>                             
                             </div>
                         </div>
                     </div>

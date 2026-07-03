@@ -1,4 +1,4 @@
-// hooks/KeycloakProvider.jsx
+
 import { useState, useEffect, createContext } from 'react';
 import keycloak from '../config/keycloak.js';
 
@@ -11,33 +11,26 @@ const KeycloakProvider = ({ children }) => {
     useEffect(() => {
         const initKeycloak = async () => {
             try {
-                console.log('Inicializando Keycloak...');
-
                 const auth = await keycloak.init({
                     onLoad: 'check-sso',
                     silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
                     checkLoginIframe: false,
                     pkceMethod: 'S256',
                     enableLogging: true
-                });
-
-                console.log('Keycloak inicializado. Autenticado:', auth);
+                });                
 
                 setAuthenticated(auth);
                 setInitialized(true);
 
-                keycloak.onAuthSuccess = () => {
-                    console.log('Auth Success');
+                keycloak.onAuthSuccess = () => {                    
                     setAuthenticated(true);
                 };
 
-                keycloak.onAuthError = () => {
-                    console.log('Auth Error');
+                keycloak.onAuthError = () => {                    
                     setAuthenticated(false);
                 };
 
-                keycloak.onAuthLogout = () => {
-                    console.log('Auth Logout');
+                keycloak.onAuthLogout = () => {                   
                     setAuthenticated(false);
                 };
 
@@ -47,8 +40,7 @@ const KeycloakProvider = ({ children }) => {
                     });
                 };
 
-            } catch (error) {
-                console.error('Error inicializando Keycloak:', error);
+            } catch (error) {                
                 setInitialized(true);
                 setAuthenticated(false);
             }

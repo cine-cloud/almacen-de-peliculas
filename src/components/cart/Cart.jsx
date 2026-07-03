@@ -1,51 +1,43 @@
 import { useCart } from '@/hooks/useCart.jsx';
-import { useKeycloak } from '@/hooks/useKeycloak.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlus, faMinus, faShoppingCart, faCreditCard, faTruck } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
 import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
 import { carritoService } from "@/services/carritoService";
+import { useContext } from "react";
+import { KeycloakContext } from "../../hooks/KeycloakProvider";
 
 
 const Cart = () => {
     const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
-    const { authenticated, login } = useKeycloak();
+    
+    const { authenticated, login, keycloak } = useContext(KeycloakContext);
     
     const procesarPago = async () => {
+
     try {
 
-        const usuarioId = "evangelina";
-
-        console.log("Creando carrito...");
-        const carrito = await carritoService.crearCarrito(usuarioId);
-        console.log("Carrito creado:", carrito);
-
-        for (const item of cart) {
-
-            console.log("Agregando item:", item);
-
-            const resultado = await carritoService.agregarItem(
-                carrito.id,
-                item.peliculaId,
-                item.quantity
-            );
-
-            console.log("Item agregado:", resultado);
+        if (!authenticated) {
+            login();
+            return;
         }
 
-        console.log("Ejecutando checkout...");
+        const carritoId = localStorage.getItem("carritoId");
 
-        const compra = await carritoService.checkout(carrito.id);
+        if (!carritoId) {
+            alert("No existe un carrito activo.");
+            return;
+        }
 
-        console.log("Checkout OK:", compra);
+        await carritoService.checkout(carritoId);
 
         alert("Compra realizada correctamente");
 
         clearCart();
 
-    } catch (error) {
+        localStorage.removeItem("carritoId");       
 
-        console.error("ERROR COMPLETO:", error);
+    } catch (error) {        
 
         if (error.response) {
             console.log("STATUS:", error.response.status);
@@ -101,7 +93,7 @@ const Cart = () => {
                                     {/* Imagen */}
                                     <div className="flex-shrink-0">
                                         <img
-                                            src={item.imagenAmpliada || imagenNoDisponible}
+                                           src={item.imagenUrl || imagenNoDisponible}
                                             alt={item.titulo}
                                             className="w-24 h-32 object-cover rounded-lg shadow-md"
                                             onError={(e) => {
@@ -218,7 +210,6 @@ const Cart = () => {
                             </div>
 
                             {/* Botón de pago */}
-                            {authenticated ? (
                             <button
                                 onClick={procesarPago}
                                 className="btn btn-primary btn-block text-lg font-semibold py-3"
@@ -226,9 +217,6 @@ const Cart = () => {
                                 <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
                                 Proceder al Pago
                             </button>
-                            ) : (
-                                   <p>El carrito está vacío</p>
-                            )}
 
                             {/* Envío gratuito */}
                             <div className="mt-4 p-3 bg-success/10 rounded-lg border border-success/20">
