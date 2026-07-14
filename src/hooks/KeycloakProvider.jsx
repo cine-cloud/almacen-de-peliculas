@@ -1,6 +1,7 @@
 
 import { useState, useEffect, createContext } from 'react';
 import keycloak from '../config/keycloak.js';
+import { setAuthToken } from "@/services/api";
 
 export const KeycloakContext = createContext();
 
@@ -17,30 +18,41 @@ const KeycloakProvider = ({ children }) => {
                     checkLoginIframe: false,
                     pkceMethod: 'S256',
                     enableLogging: true
-                });                
+                });
 
                 setAuthenticated(auth);
                 setInitialized(true);
 
-                keycloak.onAuthSuccess = () => {                    
+                if (auth) {
+                    setAuthToken(keycloak.token);
+                }
+
+                keycloak.onAuthSuccess = () => {
                     setAuthenticated(true);
+                    setAuthToken(keycloak.token);
                 };
 
-                keycloak.onAuthError = () => {                    
+                keycloak.onAuthError = () => {
                     setAuthenticated(false);
                 };
 
-                keycloak.onAuthLogout = () => {                   
+                keycloak.onAuthLogout = () => {
                     setAuthenticated(false);
+                    setAuthToken(null);
                 };
 
                 keycloak.onTokenExpired = () => {
-                    keycloak.updateToken(30).catch(() => {
-                        setAuthenticated(false);
-                    });
+                    keycloak.updateToken(30)
+                        .then(() => {
+                            setAuthToken(keycloak.token);
+                        })
+                        .catch(() => {
+                            setAuthenticated(false);
+                            setAuthToken(null);
+                        });
                 };
 
-            } catch (error) {                
+            } catch (error) {
                 setInitialized(true);
                 setAuthenticated(false);
             }
