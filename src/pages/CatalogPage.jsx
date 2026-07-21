@@ -1,16 +1,22 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useMovieModal } from "@/context/MovieModalContext";
 import MovieCatalog from "@/components/catalog/MovieCatalog";
 import MovieForm from "@/components/catalog/MovieForm";
 
 export default function CatalogPage() {
 
-    const { isModalOpen, closeModal } = useMovieModal();
+    const { isModalOpen, openModal, closeModal } = useMovieModal();
     const catalogRef = useRef(null);
+    const [peliculaSeleccionada, setPeliculaSeleccionada] = useState(null);
+    const handleEditar = (pelicula) => { setPeliculaSeleccionada(pelicula); openModal(); };
+    const handleCloseModal = () => { setPeliculaSeleccionada(null); closeModal(); };
 
     return (
         <>
-            <MovieCatalog ref={catalogRef} />
+            <MovieCatalog
+                ref={catalogRef}
+                onEditar={handleEditar}
+            />
 
             {isModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-20">
@@ -18,16 +24,19 @@ export default function CatalogPage() {
 
                         <button
                             className="absolute top-3 right-3 text-gray-500 hover:text-primary text-lg w-8 h-8 flex items-center justify-center"
-                            onClick={closeModal}
+                            onClick={handleCloseModal}
                         >
                             ✕
                         </button>
 
                         <h2 className="text-xl font-semibold mb-4 text-primary">
-                            Agregar Nueva Película
+                            {peliculaSeleccionada
+                                ? "Editar Película"
+                                : "Agregar Nueva Película"}
                         </h2>
 
                         <MovieForm
+                            pelicula={peliculaSeleccionada}
                             onSave={(movieData) => {
                                 console.log("Película guardada:", movieData);
 
@@ -35,7 +44,7 @@ export default function CatalogPage() {
 
                                 closeModal();
                             }}
-                            onClose={closeModal}
+                            onClose={handleCloseModal}
                         />
                     </div>
                 </div>

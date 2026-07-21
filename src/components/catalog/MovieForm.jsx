@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faSave,
     faTimes,
     faUpload,
 } from "@fortawesome/free-solid-svg-icons";
-import { useKeycloak} from "@/hooks/useKeycloak.js";
-import {peliculaService} from "@/services/peliculaService.js";
+import { useKeycloak } from "@/hooks/useKeycloak.js";
+import { peliculaService } from "@/services/peliculaService.js";
 
 
 const genres = [
@@ -23,7 +23,7 @@ const conditions = [
     "Nuevo", "Usado - Como nuevo", "Usado - Bueno", "Usado - Aceptable",
 ];
 
-export default function MovieForm({ onSave, onClose }) {
+export default function MovieForm({ pelicula, onSave, onClose }) {
     const [formData, setFormData] = useState({
         titulo: "",
         fechaSalida: "",
@@ -40,6 +40,25 @@ export default function MovieForm({ onSave, onClose }) {
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const { keycloak } = useKeycloak();
+
+    useEffect(() => {
+
+        if (!pelicula) return;
+
+        setFormData({
+            titulo: pelicula.titulo || "",
+            fechaSalida: pelicula.fechaSalida || "",
+            precio: pelicula.precio || "",
+            directores: pelicula.directores?.join(", ") || "",
+            actores: pelicula.actores?.join(", ") || "",
+            imagenAmpliada: pelicula.imagenAmpliada || "",
+            genero: pelicula.generos?.[0] || "",
+            condicion: pelicula.condicion || "",
+            sinopsis: pelicula.sinopsis || "",
+            formato: pelicula.formato || ""
+        });
+
+    }, [pelicula]);
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -86,12 +105,29 @@ export default function MovieForm({ onSave, onClose }) {
                 generosIds: []
             };
 
-            const peliculaCreada = await peliculaService.crear(movieData);
-            onSave(peliculaCreada);
+            let peliculaGuardada;
+
+            if (pelicula?.peliculaId) {
+
+                peliculaGuardada = await peliculaService.editar(
+                    pelicula.peliculaId,
+                    movieData
+                );
+
+            } else {
+
+                peliculaGuardada = await peliculaService.crear(movieData);
+
+            }
+
+            onSave(peliculaGuardada);
 
         } catch (error) {
-            console.error('Error al crear película:', error);
-            setErrors({ submit: 'Error al crear la película. Por favor, intenta nuevamente.' });
+            console.error('Error al guardar película:', error);
+
+            setErrors({
+                submit: 'Error al guardar la película. Por favor, intenta nuevamente.'
+            });
         } finally {
             setLoading(false);
         }
@@ -125,9 +161,8 @@ export default function MovieForm({ onSave, onClose }) {
                                 <span className="label-text">URL de la imagen *</span>
                                 <input
                                     type="text"
-                                    className={`input input-bordered w-full ${
-                                        errors.imagenAmpliada ? "input-error" : ""
-                                    }`}
+                                    className={`input input-bordered w-full ${errors.imagenAmpliada ? "input-error" : ""
+                                        }`}
                                     placeholder="https://..."
                                     value={formData.imagenAmpliada}
                                     onChange={(e) => handleInputChange("imagenAmpliada", e.target.value)}
@@ -155,9 +190,8 @@ export default function MovieForm({ onSave, onClose }) {
                                     <span className="label-text">Título *</span>
                                     <input
                                         type="text"
-                                        className={`input input-bordered ${
-                                            errors.titulo ? "input-error" : ""
-                                        }`}
+                                        className={`input input-bordered ${errors.titulo ? "input-error" : ""
+                                            }`}
                                         value={formData.titulo}
                                         onChange={(e) => handleInputChange("titulo", e.target.value)}
                                     />
@@ -170,9 +204,8 @@ export default function MovieForm({ onSave, onClose }) {
                                     <span className="label-text">Fecha de estreno *</span>
                                     <input
                                         type="date"
-                                        className={`input input-bordered ${
-                                            errors.fechaSalida ? "input-error" : ""
-                                        }`}
+                                        className={`input input-bordered ${errors.fechaSalida ? "input-error" : ""
+                                            }`}
                                         value={formData.fechaSalida}
                                         onChange={(e) => handleInputChange("fechaSalida", e.target.value)}
                                     />
@@ -187,9 +220,8 @@ export default function MovieForm({ onSave, onClose }) {
                                         type="number"
                                         min="0"
                                         step="0.01"
-                                        className={`input input-bordered ${
-                                            errors.precio ? "input-error" : ""
-                                        }`}
+                                        className={`input input-bordered ${errors.precio ? "input-error" : ""
+                                            }`}
                                         value={formData.precio}
                                         onChange={(e) => handleInputChange("precio", e.target.value)}
                                     />
@@ -201,9 +233,8 @@ export default function MovieForm({ onSave, onClose }) {
                                 <label className="form-control">
                                     <span className="label-text">Género *</span>
                                     <select
-                                        className={`select select-bordered ${
-                                            errors.genero ? "select-error" : ""
-                                        }`}
+                                        className={`select select-bordered ${errors.genero ? "select-error" : ""
+                                            }`}
                                         value={formData.genero}
                                         onChange={(e) => handleInputChange("genero", e.target.value)}
                                     >
@@ -220,9 +251,8 @@ export default function MovieForm({ onSave, onClose }) {
                                 <label className="form-control">
                                     <span className="label-text">Formato *</span>
                                     <select
-                                        className={`select select-bordered ${
-                                            errors.formato ? "select-error" : ""
-                                        }`}
+                                        className={`select select-bordered ${errors.formato ? "select-error" : ""
+                                            }`}
                                         value={formData.formato}
                                         onChange={(e) => handleInputChange("formato", e.target.value)}
                                     >
@@ -239,9 +269,8 @@ export default function MovieForm({ onSave, onClose }) {
                                 <label className="form-control">
                                     <span className="label-text">Condición *</span>
                                     <select
-                                        className={`select select-bordered ${
-                                            errors.condicion ? "select-error" : ""
-                                        }`}
+                                        className={`select select-bordered ${errors.condicion ? "select-error" : ""
+                                            }`}
                                         value={formData.condicion}
                                         onChange={(e) => handleInputChange("condicion", e.target.value)}
                                     >
@@ -260,9 +289,8 @@ export default function MovieForm({ onSave, onClose }) {
                                 <span className="label-text">Directores *</span>
                                 <input
                                     type="text"
-                                    className={`input input-bordered ${
-                                        errors.directores ? "input-error" : ""
-                                    }`}
+                                    className={`input input-bordered ${errors.directores ? "input-error" : ""
+                                        }`}
                                     value={formData.directores}
                                     onChange={(e) => handleInputChange("directores", e.target.value)}
                                     placeholder="Director 1, Director 2..."
@@ -276,9 +304,8 @@ export default function MovieForm({ onSave, onClose }) {
                                 <span className="label-text">Actores principales *</span>
                                 <input
                                     type="text"
-                                    className={`input input-bordered ${
-                                        errors.actores ? "input-error" : ""
-                                    }`}
+                                    className={`input input-bordered ${errors.actores ? "input-error" : ""
+                                        }`}
                                     value={formData.actores}
                                     onChange={(e) => handleInputChange("actores", e.target.value)}
                                     placeholder="Actor 1, Actor 2..."
@@ -291,9 +318,8 @@ export default function MovieForm({ onSave, onClose }) {
                             <label className="form-control">
                                 <span className="label-text">Sinopsis *</span>
                                 <textarea
-                                    className={`textarea textarea-bordered resize-none ${
-                                        errors.sinopsis ? "textarea-error" : ""
-                                    }`}
+                                    className={`textarea textarea-bordered resize-none ${errors.sinopsis ? "textarea-error" : ""
+                                        }`}
                                     rows={4}
                                     value={formData.sinopsis}
                                     onChange={(e) => handleInputChange("sinopsis", e.target.value)}
@@ -328,7 +354,12 @@ export default function MovieForm({ onSave, onClose }) {
                         ) : (
                             <FontAwesomeIcon icon={faSave} className="mr-2" />
                         )}
-                        {loading ? 'Guardando...' : 'Guardar Película'}
+                        {loading
+                            ? 'Guardando...'
+                            : pelicula
+                                ? 'Actualizar Película'
+                                : 'Guardar Película'
+                        }
                     </button>
                 </div>
             </form>

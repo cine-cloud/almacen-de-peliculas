@@ -4,18 +4,14 @@ import { peliculaService } from '@/services/peliculaService';
 import { useKeycloak } from "@/hooks/useKeycloak.js";
 import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
 import { useCart } from '@/hooks/useCart.jsx';
-import {
-    useEffect,
-    useState,
-    forwardRef,
-    useImperativeHandle
-} from "react";
+import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 
-const MovieCatalog = forwardRef((props, ref) => {
+const MovieCatalog = forwardRef(({ onEditar }, ref) => {
     const [peliculas, setPeliculas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { keycloak, initialized } = useKeycloak();
+    const { keycloak, initialized, isAdmin } = useKeycloak();  
+    const esAdministrador = initialized && keycloak.hasRealmRole("admin");
     const { addToCart } = useCart();
     const cargarCatalogos = async () => {
         try {
@@ -211,18 +207,30 @@ const MovieCatalog = forwardRef((props, ref) => {
                                 <span className="font-semibold">Actores:</span> {pelicula.actores?.slice(0, 3).join(', ')}...
                             </div>
                             <div className="flex justify-between items-center mt-4">
+
                                 <Link
                                     to={`/pelicula/${pelicula.peliculaId}`}
                                     className="btn btn-primary rounded-full btn-sm"
                                 >
                                     Ver detalles
                                 </Link>
+
+                                {esAdministrador && (
+                                    <button
+                                        onClick={() => onEditar?.(pelicula)}
+                                        className="btn btn-warning rounded-full btn-sm"
+                                    >
+                                        Editar
+                                    </button>
+                                )}
+
                                 <button
                                     onClick={() => addToCart(pelicula)}
                                     className="btn btn-outline btn-secondary rounded-full btn-sm"
                                 >
                                     Comprar
                                 </button>
+
                             </div>
                         </div>
                     </div>
