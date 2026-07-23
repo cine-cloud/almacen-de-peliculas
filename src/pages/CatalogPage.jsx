@@ -3,13 +3,36 @@ import { useMovieModal } from "@/context/MovieModalContext";
 import MovieCatalog from "@/components/catalog/MovieCatalog";
 import MovieForm from "@/components/catalog/MovieForm";
 import PromocionesBanner from "@/components/catalog/PromocionesBanner";
+import { peliculaService } from "@/services/peliculaService";
 
 export default function CatalogPage() {
 
     const { isModalOpen, openModal, closeModal } = useMovieModal();
     const catalogRef = useRef(null);
     const [peliculaSeleccionada, setPeliculaSeleccionada] = useState(null);
-    const handleEditar = (pelicula) => { setPeliculaSeleccionada(pelicula); openModal(); };
+    const handleEditar = async (pelicula) => {
+
+        try {
+
+            const peliculaCompleta =
+                await peliculaService.obtenerDetalle(
+                    pelicula.peliculaId
+                );
+
+            setPeliculaSeleccionada(peliculaCompleta);
+
+            openModal();
+
+        } catch (error) {
+
+            console.error(
+                "Error al obtener detalle de la película",
+                error
+            );
+
+        }
+
+    };
     const handleCloseModal = () => { setPeliculaSeleccionada(null); closeModal(); };
 
     return (

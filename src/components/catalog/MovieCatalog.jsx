@@ -211,7 +211,7 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
                                 <span className="font-semibold">Directores:</span> {pelicula.directores?.join(', ') || 'No disponible'}
                             </div>
                             <div className="flex items-center gap-1 text-sm text-gray-700">
-                                <span className="font-semibold">Actores:</span> {pelicula.actores?.slice(0, 3).join(', ')}...
+                                <span className="font-semibold">Actores:</span> {pelicula.actores || "No disponible"}
                             </div>
                             <div className="flex justify-between items-center mt-4">
 

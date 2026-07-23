@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const carritoApi = axios.create({ baseURL: "http://localhost:8082" });
+import carritoApi from "./api/carritoApi";
 
 export const carritoService = {
   crearCarrito: async (usuarioId) => {

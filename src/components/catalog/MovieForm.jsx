@@ -19,19 +19,25 @@ const formats = [
     "DVD", "Blu-ray", "Blu-ray 4K", "DVD + Digital",
     "Blu-ray + Digital", "Blu-ray 4K + Digital",
 ];
+
 const conditions = [
     "Nuevo", "Usado - Como nuevo", "Usado - Bueno", "Usado - Aceptable",
 ];
 
+
 export default function MovieForm({ pelicula, onSave, onClose }) {
+
     const [formData, setFormData] = useState({
         titulo: "",
         fechaSalida: "",
         precio: "",
-        directores: "",
+        stock: "",
+
+        director: "",
         actores: "",
+        generosDetalle: [],
+
         imagenAmpliada: "",
-        genero: "",
         condicion: "",
         sinopsis: "",
         formato: "",
@@ -45,20 +51,65 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
 
         if (!pelicula) return;
 
+        console.log("Condición recibida:", pelicula.condicion);
+
         setFormData({
             titulo: pelicula.titulo || "",
             fechaSalida: pelicula.fechaSalida || "",
             precio: pelicula.precio || "",
-            directores: pelicula.directores?.join(", ") || "",
-            actores: pelicula.actores?.join(", ") || "",
+            stock: pelicula.stock ?? "",
             imagenAmpliada: pelicula.imagenAmpliada || "",
-            genero: pelicula.generos?.[0] || "",
+
+            director: pelicula.directoresDetalle
+                ? pelicula.directoresDetalle.map(d => d.nombre).join(", ")
+                : "",
+
+            actores: pelicula.actoresDetalle
+                ? pelicula.actoresDetalle.map(a => a.nombre).join(", ")
+                : "",
+
+            generosDetalle:
+                pelicula.generosDetalle?.length
+                    ? [pelicula.generosDetalle[0]]
+                    : [],
+
             condicion: pelicula.condicion || "",
             sinopsis: pelicula.sinopsis || "",
             formato: pelicula.formato || ""
         });
 
     }, [pelicula]);
+
+    useEffect(() => {
+
+        const cargarDatos = async () => {
+
+            try {
+
+                const [listaActores, listaDirectores, listaGeneros] =
+                    await Promise.all([
+                        peliculaService.obtenerActores(),
+                        peliculaService.obtenerDirectores(),
+                        peliculaService.obtenerGeneros()
+                    ]);
+
+                setActores(listaActores);
+                setDirectores(listaDirectores);
+                setGeneros(listaGeneros);
+
+            } catch (error) {
+                console.error("Error al cargar actores, directores y géneros:", error);
+            }
+
+        };
+
+        cargarDatos();
+
+    }, []);
+
+    const [actores, setActores] = useState([]);
+    const [directores, setDirectores] = useState([]);
+    const [generos, setGeneros] = useState([]);
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -67,22 +118,60 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
 
     const validateForm = () => {
         const newErrors = {};
-        if (!formData.titulo.trim()) newErrors.titulo = "El título es obligatorio";
-        if (!formData.fechaSalida) newErrors.fechaSalida = "La fecha de estreno es obligatoria";
-        if (!formData.precio || isNaN(Number(formData.precio)) || Number(formData.precio) <= 0)
+
+        if (!formData.titulo.trim())
+            newErrors.titulo = "El título es obligatorio";
+
+        if (!formData.fechaSalida)
+            newErrors.fechaSalida = "La fecha de estreno es obligatoria";
+
+        if (
+            !formData.precio ||
+            isNaN(Number(formData.precio)) ||
+            Number(formData.precio) <= 0
+        ) {
             newErrors.precio = "El precio debe ser válido y mayor a 0";
-        if (!formData.directores.trim()) newErrors.directores = "Al menos un director es obligatorio";
-        if (!formData.actores.trim()) newErrors.actores = "Al menos un actor es obligatorio";
-        if (!formData.imagenAmpliada.trim()) newErrors.imagenAmpliada = "La URL de la imagen es obligatoria";
-        if (!formData.genero) newErrors.genero = "El género es obligatorio";
-        if (!formData.sinopsis.trim()) newErrors.sinopsis = "La sinopsis es obligatoria";
-        if (!formData.formato) newErrors.formato = "El formato es obligatorio";
-        if (!formData.condicion) newErrors.condicion = "La condición es obligatoria";
+        }
+
+        if (
+            formData.stock === "" ||
+            isNaN(Number(formData.stock)) ||
+            Number(formData.stock) < 0
+        ) {
+            newErrors.stock = "El stock debe ser mayor o igual a 0";
+        }
+
+        if (!formData.director.trim()) {
+            newErrors.director = "Debe ingresar al menos un director";
+        }
+
+        if (!formData.actores.trim()) {
+            newErrors.actores = "Debe ingresar al menos un actor";
+        }
+
+        if (formData.generosDetalle.length === 0) {
+            newErrors.genero = "Debe seleccionar un género";
+        }
+
+        if (!formData.imagenAmpliada.trim()) {
+            newErrors.imagenAmpliada = "La URL de la imagen es obligatoria";
+        }
+
+        if (!formData.sinopsis.trim()) {
+            newErrors.sinopsis = "La sinopsis es obligatoria";
+        }
+
+        if (!formData.formato) {
+            newErrors.formato = "El formato es obligatorio";
+        }
+
+        if (!formData.condicion) {
+            newErrors.condicion = "La condición es obligatoria";
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
@@ -94,15 +183,16 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                 titulo: formData.titulo.trim(),
                 fechaSalida: formData.fechaSalida,
                 precio: Number(formData.precio),
+                stock: Number(formData.stock),
+
                 condicion: formData.condicion,
                 formato: formData.formato,
                 sinopsis: formData.sinopsis.trim(),
                 imagenAmpliada: formData.imagenAmpliada.trim(),
-                // Para crear, necesitarías enviar IDs de actores, directores y géneros
-                // Por ahora enviamos arrays vacíos, deberías tener un sistema para seleccionar estos IDs
-                actoresIds: [],
-                directoresIds: [],
-                generosIds: []
+
+                actoresIds: formData.actoresDetalle.map(actor => actor.actorId),
+                directoresIds: formData.directoresDetalle.map(director => director.directorId),
+                generosIds: formData.generosDetalle.map(genero => genero.generoId)
             };
 
             let peliculaGuardada;
@@ -215,7 +305,7 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                                 </label>
 
                                 <label className="form-control">
-                                    <span className="label-text">Precio (€) *</span>
+                                    <span className="label-text">Precio ($) *</span>
                                     <input
                                         type="number"
                                         min="0"
@@ -231,18 +321,54 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                                 </label>
 
                                 <label className="form-control">
+                                    <span className="label-text">Stock disponible *</span>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className={`input input-bordered ${errors.stock ? "input-error" : ""
+                                            }`}
+                                        value={formData.stock}
+                                        onChange={(e) => handleInputChange("stock", e.target.value)}
+                                    />
+
+                                    {errors.stock && (
+                                        <p className="text-error text-sm">
+                                            {errors.stock}
+                                        </p>
+                                    )}
+                                </label>
+
+                                <label className="form-control">
                                     <span className="label-text">Género *</span>
+
                                     <select
                                         className={`select select-bordered ${errors.genero ? "select-error" : ""
                                             }`}
-                                        value={formData.genero}
-                                        onChange={(e) => handleInputChange("genero", e.target.value)}
+                                        value={formData.generosDetalle[0]?.generoId || ""}
+                                        onChange={(e) => {
+                                            const generoSeleccionado = generos.find(
+                                                (g) => g.generoId === Number(e.target.value)
+                                            );
+
+                                            handleInputChange(
+                                                "generosDetalle",
+                                                generoSeleccionado ? [generoSeleccionado] : []
+                                            );
+                                        }}
                                     >
                                         <option value="">Seleccionar género</option>
-                                        {genres.map((g) => (
-                                            <option key={g}>{g}</option>
+
+                                        {generos.map((genero) => (
+                                            <option
+                                                key={genero.generoId}
+                                                value={genero.generoId}
+                                            >
+                                                {genero.nombre}
+                                            </option>
                                         ))}
                                     </select>
+
                                     {errors.genero && (
                                         <p className="text-error text-sm">{errors.genero}</p>
                                     )}
@@ -286,30 +412,50 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                             </div>
 
                             <label className="form-control">
-                                <span className="label-text">Directores *</span>
+                                <span className="label-text">Director(es) *</span>
+
                                 <input
                                     type="text"
-                                    className={`input input-bordered ${errors.directores ? "input-error" : ""
+                                    className={`input input-bordered ${errors.director ? "input-error" : ""
                                         }`}
-                                    value={formData.directores}
-                                    onChange={(e) => handleInputChange("directores", e.target.value)}
-                                    placeholder="Director 1, Director 2..."
+                                    placeholder="Ej: Martin Scorsese, Francis Ford Coppola"
+                                    value={formData.director}
+                                    onChange={(e) =>
+                                        handleInputChange("director", e.target.value)
+                                    }
                                 />
-                                {errors.directores && (
-                                    <p className="text-error text-sm">{errors.directores}</p>
+
+                                <label className="label">
+                                    <span className="label-text-alt">
+                                        Si hay más de un director, separalos con comas.
+                                    </span>
+                                </label>
+
+                                {errors.director && (
+                                    <p className="text-error text-sm">{errors.director}</p>
                                 )}
                             </label>
 
                             <label className="form-control">
                                 <span className="label-text">Actores principales *</span>
-                                <input
-                                    type="text"
-                                    className={`input input-bordered ${errors.actores ? "input-error" : ""
+
+                                <textarea
+                                    rows={3}
+                                    className={`textarea textarea-bordered ${errors.actores ? "textarea-error" : ""
                                         }`}
+                                    placeholder="Ej: Leonardo DiCaprio, Samuel L. Jackson, Morgan Freeman"
                                     value={formData.actores}
-                                    onChange={(e) => handleInputChange("actores", e.target.value)}
-                                    placeholder="Actor 1, Actor 2..."
+                                    onChange={(e) =>
+                                        handleInputChange("actores", e.target.value)
+                                    }
                                 />
+
+                                <label className="label">
+                                    <span className="label-text-alt">
+                                        Separá los actores con comas.
+                                    </span>
+                                </label>
+
                                 {errors.actores && (
                                     <p className="text-error text-sm">{errors.actores}</p>
                                 )}

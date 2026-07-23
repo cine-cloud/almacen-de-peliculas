@@ -1,7 +1,7 @@
 
 import { useState, useEffect, createContext } from 'react';
 import keycloak from '../config/keycloak.js';
-import { setAuthToken } from "@/services/api";
+import { setAuthToken } from "@/services/api/auth";
 
 export const KeycloakContext = createContext();
 
