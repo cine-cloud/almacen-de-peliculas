@@ -4,14 +4,66 @@ import { faTrash, faPlus, faMinus, faShoppingCart, faCreditCard, faTruck } from 
 import { Link } from 'react-router-dom';
 import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
 import { carritoService } from "@/services/carritoService";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { KeycloakContext } from "../../hooks/KeycloakProvider";
+import { descuentoService } from "@/services/descuentoService";
 
 
 const Cart = () => {
     const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
     
-    const { authenticated, login, keycloak } = useContext(KeycloakContext);
+    const { authenticated, login, keycloak, isAdmin } = useContext(KeycloakContext);
+
+    const [codigoDescuento, setCodigoDescuento] = useState("");
+    const [descuentoAplicado, setDescuentoAplicado] = useState(null);
+    const [descuentoError, setDescuentoError] = useState("");
+    const [descuentoSuccess, setDescuentoSuccess] = useState("");
+
+    const handleApplyDescuento = async () => {
+        setDescuentoError("");
+        setDescuentoSuccess("");
+        if (!codigoDescuento.trim()) {
+            setDescuentoError("Por favor ingresa un código.");
+            return;
+        }
+
+        try {
+            const cuponesActivos = await descuentoService.listarActivos();
+            const cuponEncontrado = cuponesActivos.find(
+                c => c.codigo.trim().toUpperCase() === codigoDescuento.trim().toUpperCase()
+            );
+
+            if (cuponEncontrado) {
+                setDescuentoAplicado(cuponEncontrado);
+                setDescuentoSuccess(`Descuento del ${Math.round(cuponEncontrado.monto)}% aplicado correctamente.`);
+            } else {
+                setDescuentoError("El código ingresado no existe o no se encuentra activo.");
+                setDescuentoAplicado(null);
+            }
+        } catch (error) {
+            console.error("Error al aplicar descuento:", error);
+            setDescuentoError("Ocurrió un error al verificar el código.");
+        }
+    };
+
+    const getDescuentoMonto = () => {
+        if (!descuentoAplicado) return 0;
+        return getCartTotal() * (descuentoAplicado.monto / 100);
+    };
+
+    const getSubtotalConDescuento = () => {
+        return getCartTotal() - getDescuentoMonto();
+    };
+
+    // Calcular IVA (21%)
+    const calculateIVA = () => {
+        return getSubtotalConDescuento() * 0.21;
+    };
+
+    // Calcular total con IVA
+    const getTotalWithIVA = () => {
+        return getSubtotalConDescuento() + calculateIVA();
+    };
     
     const procesarPago = async () => {
 
@@ -29,7 +81,8 @@ const Cart = () => {
             return;
         }
 
-        await carritoService.checkout(carritoId);
+        const montoDescuento = getDescuentoMonto();
+        await carritoService.checkout(carritoId, montoDescuento);
 
         alert("Compra realizada correctamente");
 
@@ -48,15 +101,19 @@ const Cart = () => {
     }
 };
 
-    // Calcular IVA (21%)
-    const calculateIVA = () => {
-        return getCartTotal() * 0.21;
-    };
-
-    // Calcular total con IVA
-    const getTotalWithIVA = () => {
-        return getCartTotal() + calculateIVA();
-    };
+    if (isAdmin && isAdmin()) {
+        return (
+            <div className="container mx-auto p-6 max-w-6xl text-center py-12">
+                <div className="alert alert-error alert-soft max-w-md mx-auto mb-6 flex flex-col items-center">
+                    <h2 className="text-2xl font-bold text-error">Acceso Restringido</h2>
+                    <p className="text-gray-600 mt-2">Los administradores no realizan compras ni utilizan el carrito.</p>
+                </div>
+                <Link to="/" className="btn btn-primary">
+                    Volver al Catálogo
+                </Link>
+            </div>
+        );
+    }
 
     if (cart.length === 0) {
         return (
@@ -191,6 +248,13 @@ const Cart = () => {
                                     <span className="font-semibold"> $ {getCartTotal().toFixed(2)}</span>
                                 </div>
 
+                                {descuentoAplicado && (
+                                    <div className="flex justify-between text-sm text-success font-semibold">
+                                        <span>Descuento ({Math.round(descuentoAplicado.monto)}%)</span>
+                                        <span>- $ {getDescuentoMonto().toFixed(2)}</span>
+                                    </div>
+                                )}
+
                                 <div className="flex justify-between text-sm">
                                     <span>Envío</span>
                                     <span className="text-success font-semibold">Gratis</span>
@@ -207,6 +271,34 @@ const Cart = () => {
                                         <span className="text-primary"> $ {getTotalWithIVA().toFixed(2)} </span>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Campo de código de descuento */}
+                            <div className="mb-6 p-4 bg-base-200 rounded-lg border border-base-300">
+                                <label className="block text-sm font-semibold mb-2">
+                                    ¿Tienes un cupón de descuento?
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="CÓDIGO"
+                                        value={codigoDescuento}
+                                        onChange={(e) => setCodigoDescuento(e.target.value)}
+                                        className="input input-bordered input-sm flex-grow font-mono uppercase"
+                                    />
+                                    <button
+                                        onClick={handleApplyDescuento}
+                                        className="btn btn-primary btn-sm"
+                                    >
+                                        Aplicar
+                                    </button>
+                                </div>
+                                {descuentoError && (
+                                    <p className="text-error text-xs mt-2 font-medium">{descuentoError}</p>
+                                )}
+                                {descuentoSuccess && (
+                                    <p className="text-success text-xs mt-2 font-medium">{descuentoSuccess}</p>
+                                )}
                             </div>
 
                             {/* Botón de pago */}

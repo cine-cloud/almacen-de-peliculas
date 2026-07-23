@@ -9,6 +9,8 @@ import { CartProvider } from "@/hooks/useCart.jsx";
 import Cart from "./components/cart/Cart.jsx";
 import HistorialCompras from "./pages/HistorialCompras.jsx";
 import { MovieModalProvider } from "./context/MovieModalContext";
+import ProtectedRoute from "@/components/ProtectedRoute.jsx";
+import GestionDescuentos from "@/pages/GestionDescuentos.jsx";
 
 library.add(faShareNodes);
 
@@ -25,6 +27,14 @@ function App() {
                 <Route path="/pelicula/:id" element={<MovieDetail />} />
                 <Route path="/carrito" element={<Cart />} />
                 <Route path="/historial" element={<HistorialCompras />} />
+                <Route 
+                  path="/admin/descuentos" 
+                  element={
+                    <ProtectedRoute role="admin">
+                      <GestionDescuentos />
+                    </ProtectedRoute>
+                  } 
+                />
               </Routes>
             </div>
           </Router>

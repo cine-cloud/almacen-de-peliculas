@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useMovieModal } from "@/context/MovieModalContext";
 import MovieCatalog from "@/components/catalog/MovieCatalog";
 import MovieForm from "@/components/catalog/MovieForm";
+import PromocionesBanner from "@/components/catalog/PromocionesBanner";
 
 export default function CatalogPage() {
 
@@ -13,6 +14,7 @@ export default function CatalogPage() {
 
     return (
         <>
+            <PromocionesBanner />
             <MovieCatalog
                 ref={catalogRef}
                 onEditar={handleEditar}

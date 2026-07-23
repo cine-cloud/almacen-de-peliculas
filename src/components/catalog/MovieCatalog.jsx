@@ -214,7 +214,6 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
                                 >
                                     Ver detalles
                                 </Link>
-
                                 {esAdministrador && (
                                     <button
                                         onClick={() => onEditar?.(pelicula)}
@@ -224,13 +223,14 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
                                     </button>
                                 )}
 
-                                <button
-                                    onClick={() => addToCart(pelicula)}
-                                    className="btn btn-outline btn-secondary rounded-full btn-sm"
-                                >
-                                    Comprar
-                                </button>
-
+                                {!isAdmin() && (
+                                    <button
+                                        onClick={() => addToCart(pelicula)}
+                                        className="btn btn-outline btn-secondary rounded-full btn-sm"
+                                    >
+                                        Comprar
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>

@@ -5,6 +5,7 @@ import { faHeart, faShareNodes, faCheckCircle } from "@fortawesome/free-solid-sv
 import { peliculaService } from '@/services/peliculaService';
 import { useCart } from '@/hooks/useCart.jsx';
 import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
+import { useKeycloak } from "@/hooks/useKeycloak.js";
 
 const MovieDetail = () => {
     const { id } = useParams();
@@ -13,6 +14,7 @@ const MovieDetail = () => {
     const [error, setError] = useState(null);
     const [showSuccess, setShowSuccess] = useState(false);
     const { addToCart } = useCart();
+    const { isAdmin } = useKeycloak();
 
     useEffect(() => {
         const cargarPelicula = async () => {
@@ -107,13 +109,15 @@ const MovieDetail = () => {
                       }}
                     />
                     <div className="flex flex-col gap-2 mt-4">
-                        <button className="btn btn-primary rounded-full">Ver ahora</button>
-                        <button
-                            className="btn btn-outline btn-secondary rounded-full"
-                            onClick={handleAddToCart}
-                        >
-                            Añadir al carrito
-                        </button>
+                        {!isAdmin() && <button className="btn btn-primary rounded-full">Ver ahora</button>}
+                        {!isAdmin() && (
+                            <button
+                                className="btn btn-outline btn-secondary rounded-full"
+                                onClick={handleAddToCart}
+                            >
+                                Añadir al carrito
+                            </button>
+                        )}
 
                         <div className="flex gap-2">
                             <button className="btn flex-1 btn-outline btn-secondary rounded-full hover:text-primary-content">

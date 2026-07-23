@@ -26,6 +26,11 @@ export const carritoService = {
     return response.data;
   },
 
+  obtenerCarritoUsuario: async (usuarioId) => {
+    const response = await carritoApi.get(`/carritos/usuario/${usuarioId}`);
+    return response.data;
+  },
+
   agregarItem: async (idCarrito, peliculaId, cantidad = 1) => {
     const response = await carritoApi.post(
       `/carritos/agregar-item/${idCarrito}`,
@@ -71,8 +76,9 @@ export const carritoService = {
     return response.data;
   },
 
-  checkout: async (idCarrito) => {
-    const response = await carritoApi.post(`/carritos/checkout/${idCarrito}`);
+  checkout: async (idCarrito, descuentoMonto) => {
+    const url = `/carritos/checkout/${idCarrito}${descuentoMonto ? `?descuentoMonto=${descuentoMonto}` : ""}`;
+    const response = await carritoApi.post(url);
 
     return response.data;
   },

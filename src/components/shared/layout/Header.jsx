@@ -1,10 +1,10 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCrown, faFilm, faSignOutAlt, faUser, faUsers, faSignInAlt, faUserPlus } from "@fortawesome/free-solid-svg-icons";
+import { faCrown, faFilm, faSignOutAlt, faUser, faUsers, faSignInAlt, faUserPlus, faTag } from "@fortawesome/free-solid-svg-icons";
 import { useKeycloak } from "@/hooks/useKeycloak.js";
 import { faShoppingCart } from '@fortawesome/free-solid-svg-icons';
 import { useCart } from '@/hooks/useCart.jsx';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useMovieModal } from "@/context/MovieModalContext";
 
 export default function Header() {
@@ -12,11 +12,13 @@ export default function Header() {
   const { keycloak, initialized, authenticated, isAdmin, isCliente } = useKeycloak();
   const { getCartItemsCount } = useCart();
   const { openModal } = useMovieModal();
+  const navigate = useNavigate();
   // Verificar permisos basados en Realm Roles
   const canAddMovies = authenticated && isAdmin();
 
   const handleAddMovie = () => {
     openModal();
+    navigate("/");
   };
 
   const handleLogin = () => {
@@ -81,15 +83,28 @@ export default function Header() {
             </button>
           )}
 
-          {/* Enlace al carrito - SIEMPRE visible */}
-          <Link to="/carrito" className="btn btn-ghost btn-circle relative">
-            <FontAwesomeIcon icon={faShoppingCart} className="text-lg" />
-            {getCartItemsCount() > 0 && (
-              <span className="absolute -top-2 -right-2 badge badge-primary badge-sm">
-                {getCartItemsCount()}
-              </span>
-            )}
-          </Link>
+          {/* Botón para gestionar descuentos - Solo admin */}
+          {canAddMovies && (
+            <Link
+              to="/admin/descuentos"
+              className="btn btn-primary btn-sm flex items-center gap-2"
+            >
+              <FontAwesomeIcon icon={faTag} />
+              Gestionar Descuentos
+            </Link>
+          )}
+
+          {/* Enlace al carrito - Oculto para admin */}
+          {!isAdmin() && (
+            <Link to="/carrito" className="btn btn-ghost btn-circle relative">
+              <FontAwesomeIcon icon={faShoppingCart} className="text-lg" />
+              {getCartItemsCount() > 0 && (
+                <span className="absolute -top-2 -right-2 badge badge-primary badge-sm">
+                  {getCartItemsCount()}
+                </span>
+              )}
+            </Link>
+          )}
 
           {/* BOTÓN HISTORIAL */}
           {authenticated && (
@@ -144,16 +159,6 @@ export default function Header() {
                     Mi Cuenta
                   </button>
                 </li>
-
-                {canAddMovies && (
-                  <button
-                    onClick={handleAddMovie}
-                    className="btn btn-primary btn-sm flex items-center gap-2"
-                  >
-                    <FontAwesomeIcon icon={faFilm} />
-                    Agregar Película
-                  </button>
-                )}
 
                 <li className="divider my-1"></li>
                 <li>
