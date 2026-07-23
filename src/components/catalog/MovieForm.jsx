@@ -14,7 +14,6 @@ const genres = [
     "Terror", "Thriller", "Romance", "Documentales", "Animación",
 ];
 
-const ageRatings = ["G", "PG", "PG-13", "R", "NC-17"];
 const formats = [
     "DVD", "Blu-ray", "Blu-ray 4K", "DVD + Digital",
     "Blu-ray + Digital", "Blu-ray 4K + Digital",
@@ -39,7 +38,7 @@ export default function MovieForm({ onSave, onClose }) {
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
-    const { keycloak } = useKeycloak();
+    useKeycloak();
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));

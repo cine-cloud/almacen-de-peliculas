@@ -26,7 +26,7 @@ api.interceptors.response.use(
                 } else {
                     keycloak.login();
                 }
-            } catch (refreshError) {
+            } catch {
                 keycloak.login();
             }
         }
