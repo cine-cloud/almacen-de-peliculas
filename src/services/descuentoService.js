@@ -1,0 +1,82 @@
+import axios from "axios";
+import keycloak from "@/config/keycloak";
+
+const descuentoApi = axios.create({
+  baseURL: "http://localhost:8084",
+});
+
+descuentoApi.interceptors.request.use(
+  (config) => {
+    if (keycloak.token) {
+      config.headers.Authorization = `Bearer ${keycloak.token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+export const descuentoService = {
+  listarActivos: async () => {
+    try {
+      const response = await descuentoApi.get("/descuentos");
+      return response.data;
+    } catch (error) {
+      console.error("Error al listar descuentos activos:", error);
+      throw error;
+    }
+  },
+
+  listarTodos: async () => {
+    try {
+      const response = await descuentoApi.get("/descuentos/todos");
+      return response.data;
+    } catch (error) {
+      console.error("Error al listar todos los descuentos:", error);
+      throw error;
+    }
+  },
+
+  obtenerDetalle: async (id) => {
+    try {
+      const response = await descuentoApi.get(`/descuentos/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error al obtener detalle del descuento ${id}:`, error);
+      throw error;
+    }
+  },
+
+  crear: async (descuentoData) => {
+    try {
+      const response = await descuentoApi.post("/descuentos", descuentoData);
+      return response.data;
+    } catch (error) {
+      console.error("Error al crear descuento:", error);
+      throw error;
+    }
+  },
+
+  editar: async (id, descuentoData) => {
+    try {
+      const response = await descuentoApi.put(`/descuentos/${id}`, descuentoData);
+      return response.data;
+    } catch (error) {
+      console.error(`Error al editar descuento ${id}:`, error);
+      throw error;
+    }
+  },
+
+  eliminar: async (id) => {
+    try {
+      const response = await descuentoApi.delete(`/descuentos/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error al eliminar descuento ${id}:`, error);
+      throw error;
+    }
+  },
+};
+
+export default descuentoService;

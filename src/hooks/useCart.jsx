@@ -66,6 +66,12 @@ export const CartProvider = ({ children }) => {
 
             if (authenticated) {
 
+                const roles = keycloak?.tokenParsed?.realm_access?.roles || [];
+                if (roles.includes("admin")) {
+                    setCart([]);
+                    return;
+                }
+
                 await asociarCarritoAlUsuario();
 
                 return;
@@ -115,6 +121,11 @@ export const CartProvider = ({ children }) => {
     }, [authenticated]);
 
     const addToCart = async (movie) => {
+
+        const roles = keycloak?.tokenParsed?.realm_access?.roles || [];
+        if (roles.includes("admin")) {
+            return;
+        }
 
         try {
 

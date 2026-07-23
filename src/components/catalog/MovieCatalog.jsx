@@ -11,7 +11,14 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { keycloak, initialized, isAdmin } = useKeycloak();  
-    const esAdministrador = initialized && keycloak.hasRealmRole("admin");
+    const esAdministrador = initialized && isAdmin();
+    console.log("Debug esAdministrador:", {
+        initialized,
+        authenticated: keycloak?.authenticated,
+        roles: keycloak?.tokenParsed?.realm_access?.roles,
+        isAdminResult: isAdmin ? isAdmin() : "no-function",
+        esAdministrador
+    });
     const { addToCart } = useCart();
     const cargarCatalogos = async () => {
         try {
