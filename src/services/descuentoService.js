@@ -1,21 +1,11 @@
 import axios from "axios";
-import keycloak from "@/config/keycloak";
+import { attachAuthInterceptor } from "@/services/api/auth";
 
 const descuentoApi = axios.create({
   baseURL: "http://localhost:8084",
 });
 
-descuentoApi.interceptors.request.use(
-  (config) => {
-    if (keycloak.token) {
-      config.headers.Authorization = `Bearer ${keycloak.token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+attachAuthInterceptor(descuentoApi);
 
 export const descuentoService = {
   listarActivos: async () => {
