@@ -103,10 +103,9 @@ export default function DescuentoFormModal({ isOpen, onClose, onSave, descuento 
       onSave();
       onClose();
     } catch (err) {
-      console.error("Error al guardar descuento:", err);
       const backendMessage =
         err.response?.data?.message ||
-        err.response?.data ||
+        (typeof err.response?.data === 'string' ? err.response.data : null) ||
         "Ocurrió un error al procesar la solicitud. Verifica que el código no esté duplicado.";
       setError(backendMessage);
     } finally {
