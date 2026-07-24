@@ -45,6 +45,8 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
     const { keycloak } = useKeycloak();
 
     useEffect(() => {
@@ -60,18 +62,15 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
             stock: pelicula.stock ?? "",
             imagenAmpliada: pelicula.imagenAmpliada || "",
 
-            director: pelicula.directoresDetalle
-                ? pelicula.directoresDetalle.map(d => d.nombre).join(", ")
-                : "",
+            director: pelicula.director
+                || (Array.isArray(pelicula.directores) ? pelicula.directores.join(", ") : "")
+                || "",
 
-            actores: pelicula.actoresDetalle
-                ? pelicula.actoresDetalle.map(a => a.nombre).join(", ")
-                : "",
+            actores: pelicula.actores
+                || (Array.isArray(pelicula.actoresDetalle) ? pelicula.actoresDetalle.map(a => a.nombre).join(", ") : "")
+                || "",
 
-            generosDetalle:
-                pelicula.generosDetalle?.length
-                    ? [pelicula.generosDetalle[0]]
-                    : [],
+            generosDetalle: pelicula.generosDetalle || [],
 
             condicion: pelicula.condicion || "",
             sinopsis: pelicula.sinopsis || "",
@@ -172,13 +171,17 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         if (!validateForm()) return;
+        setShowConfirmModal(true);
+    };
 
+    const handleConfirmSave = async () => {
+        setShowConfirmModal(false);
         setLoading(true);
+        setSuccessMessage("");
         try {
-            // Mapear los datos del formulario al DTO del backend
             const movieData = {
                 titulo: formData.titulo.trim(),
                 fechaSalida: formData.fechaSalida,
@@ -190,31 +193,30 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                 sinopsis: formData.sinopsis.trim(),
                 imagenAmpliada: formData.imagenAmpliada.trim(),
 
-                actoresIds: formData.actoresDetalle.map(actor => actor.actorId),
-                directoresIds: formData.directoresDetalle.map(director => director.directorId),
+                director: formData.director.trim(),
+                actores: formData.actores.trim(),
                 generosIds: formData.generosDetalle.map(genero => genero.generoId)
             };
 
             let peliculaGuardada;
 
             if (pelicula?.peliculaId) {
-
                 peliculaGuardada = await peliculaService.editar(
                     pelicula.peliculaId,
                     movieData
                 );
-
+                setSuccessMessage("¡Película actualizada correctamente!");
             } else {
-
                 peliculaGuardada = await peliculaService.crear(movieData);
-
+                setSuccessMessage("¡Película creada correctamente!");
             }
 
-            onSave(peliculaGuardada);
+            setTimeout(() => {
+                onSave(peliculaGuardada);
+            }, 1200);
 
         } catch (error) {
             console.error('Error al guardar película:', error);
-
             setErrors({
                 submit: 'Error al guardar la película. Por favor, intenta nuevamente.'
             });
@@ -225,6 +227,11 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
 
     return (
         <div className="max-w-4xl mx-auto">
+            {successMessage && (
+                <div className="alert alert-success text-success-content shadow-lg flex items-center justify-between font-semibold mb-6 animate-fade-in">
+                    <span>✓ {successMessage}</span>
+                </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Vista previa */}
@@ -339,38 +346,49 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                                     )}
                                 </label>
 
-                                <label className="form-control">
-                                    <span className="label-text">Género *</span>
+                                <label className="form-control col-span-1 lg:col-span-2">
+                                    <span className="label-text font-medium mb-1">
+                                        Géneros * <span className="text-xs text-base-content/60">(Puedes seleccionar varios)</span>
+                                    </span>
 
-                                    <select
-                                        className={`select select-bordered ${errors.genero ? "select-error" : ""
-                                            }`}
-                                        value={formData.generosDetalle[0]?.generoId || ""}
-                                        onChange={(e) => {
-                                            const generoSeleccionado = generos.find(
-                                                (g) => g.generoId === Number(e.target.value)
-                                            );
-
-                                            handleInputChange(
-                                                "generosDetalle",
-                                                generoSeleccionado ? [generoSeleccionado] : []
-                                            );
-                                        }}
-                                    >
-                                        <option value="">Seleccionar género</option>
-
-                                        {generos.map((genero) => (
-                                            <option
-                                                key={genero.generoId}
-                                                value={genero.generoId}
-                                            >
-                                                {genero.nombre}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className={`p-3 rounded-lg border min-h-[52px] flex flex-wrap gap-2 items-center ${
+                                        errors.genero ? "border-error bg-error/5" : "border-base-300 bg-base-100"
+                                    }`}>
+                                        {generos.length === 0 ? (
+                                            <span className="text-sm text-base-content/50">Cargando géneros...</span>
+                                        ) : (
+                                            generos.map((genero) => {
+                                                const isSelected = formData.generosDetalle.some(
+                                                    (g) => g.generoId === genero.generoId
+                                                );
+                                                return (
+                                                    <button
+                                                        key={genero.generoId}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newGeneros = isSelected
+                                                                ? formData.generosDetalle.filter(
+                                                                      (g) => g.generoId !== genero.generoId
+                                                                  )
+                                                                : [...formData.generosDetalle, genero];
+                                                            handleInputChange("generosDetalle", newGeneros);
+                                                        }}
+                                                        className={`badge p-3 gap-1 cursor-pointer transition-all text-xs font-semibold ${
+                                                            isSelected
+                                                                ? "badge-primary text-primary-content shadow"
+                                                                : "badge-outline opacity-70 hover:opacity-100 hover:badge-primary"
+                                                        }`}
+                                                    >
+                                                        {isSelected ? "✓ " : "+ "}
+                                                        {genero.nombre}
+                                                    </button>
+                                                );
+                                            })
+                                        )}
+                                    </div>
 
                                     {errors.genero && (
-                                        <p className="text-error text-sm">{errors.genero}</p>
+                                        <p className="text-error text-sm mt-1">{errors.genero}</p>
                                     )}
                                 </label>
 
@@ -509,6 +527,36 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                     </button>
                 </div>
             </form>
+
+            {/* Modal de Confirmación */}
+            {showConfirmModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-base-100 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-base-300 animate-scale-up">
+                        <h3 className="text-lg font-bold text-base-content flex items-center gap-2">
+                            ❓ ¿Confirmar {pelicula ? "actualización" : "creación"}?
+                        </h3>
+                        <p className="text-sm text-base-content/80">
+                            ¿Estás seguro de que deseas guardar los cambios en la película <strong className="text-primary">{formData.titulo}</strong>?
+                        </p>
+                        <div className="flex justify-end gap-3 pt-3 border-t border-base-200">
+                            <button
+                                type="button"
+                                className="btn btn-ghost btn-sm rounded-lg"
+                                onClick={() => setShowConfirmModal(false)}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-primary btn-sm rounded-lg font-semibold"
+                                onClick={handleConfirmSave}
+                            >
+                                Sí, guardar cambios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

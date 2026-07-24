@@ -10,34 +10,46 @@ export default function CatalogPage() {
     const { isModalOpen, openModal, closeModal } = useMovieModal();
     const catalogRef = useRef(null);
     const [peliculaSeleccionada, setPeliculaSeleccionada] = useState(null);
+    const [toastMessage, setToastMessage] = useState("");
+
     const handleEditar = async (pelicula) => {
-
         try {
-
-            const peliculaCompleta =
-                await peliculaService.obtenerDetalle(
-                    pelicula.peliculaId
-                );
-
+            const peliculaCompleta = await peliculaService.obtenerDetalle(pelicula.peliculaId);
             setPeliculaSeleccionada(peliculaCompleta);
-
             openModal();
-
         } catch (error) {
-
-            console.error(
-                "Error al obtener detalle de la película",
-                error
-            );
-
+            console.error("Error al obtener detalle de la película", error);
         }
-
     };
+
     const handleCloseModal = () => { setPeliculaSeleccionada(null); closeModal(); };
+
+    const handleSaveSuccess = (movieData, isEdition) => {
+        const msg = isEdition 
+            ? "¡Película actualizada correctamente!" 
+            : "¡Película creada correctamente!";
+        setToastMessage(msg);
+        catalogRef.current?.reload();
+        closeModal();
+        setTimeout(() => {
+            setToastMessage("");
+        }, 4000);
+    };
 
     return (
         <>
             <PromocionesBanner />
+
+            {/* Alerta flotante de éxito (Toast) */}
+            {toastMessage && (
+                <div className="fixed top-20 right-6 z-50 animate-bounce">
+                    <div className="alert alert-success text-white shadow-2xl font-bold px-6 py-4 rounded-xl flex items-center gap-3">
+                        <span className="text-xl">✓</span>
+                        <span className="text-base">{toastMessage}</span>
+                    </div>
+                </div>
+            )}
+
             <MovieCatalog
                 ref={catalogRef}
                 onEditar={handleEditar}
@@ -62,13 +74,7 @@ export default function CatalogPage() {
 
                         <MovieForm
                             pelicula={peliculaSeleccionada}
-                            onSave={(movieData) => {
-                                console.log("Película guardada:", movieData);
-
-                                catalogRef.current?.reload();
-
-                                closeModal();
-                            }}
+                            onSave={(movieData) => handleSaveSuccess(movieData, !!peliculaSeleccionada)}
                             onClose={handleCloseModal}
                         />
                     </div>

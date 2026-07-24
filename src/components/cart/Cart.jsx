@@ -91,13 +91,31 @@ const Cart = () => {
         localStorage.removeItem("carritoId");       
 
     } catch (error) {        
-
         if (error.response) {
             console.log("STATUS:", error.response.status);
             console.log("DATA:", error.response.data);
         }
 
-        alert("Error al procesar la compra");
+        const data = error.response?.data;
+        let mensajeError = "Error al procesar la compra";
+
+        if (typeof data === 'string' && data.trim()) {
+            mensajeError = data;
+        } else if (data && typeof data === 'object') {
+            if (data.message && data.message !== "Bad Request") {
+                mensajeError = data.message;
+            } else if (data.reason && data.reason !== "Bad Request") {
+                mensajeError = data.reason;
+            } else if (data.error && data.error !== "Bad Request") {
+                mensajeError = data.error;
+            } else if (data.message === "Bad Request" || data.error === "Bad Request" || error.response?.status === 400) {
+                mensajeError = "Stock insuficiente para realizar la compra";
+            }
+        } else if (error.message) {
+            mensajeError = error.message;
+        }
+
+        alert(mensajeError);
     }
 };
 

@@ -157,10 +157,10 @@ const MovieDetail = () => {
 
                     <h3 className="text-lg font-semibold text-accent mb-1">Reparto y Equipo</h3>
                     <div className="text-sm text-gray-700 mb-2">
-                        <span className="font-semibold">Directores:</span> {pelicula.directores?.join(', ') || 'No disponible'}
+                        <span className="font-semibold">Directores:</span> {Array.isArray(pelicula.directores) ? pelicula.directores.join(', ') : (pelicula.director || 'No disponible')}
                     </div>
                     <div className="text-sm text-gray-700 mb-4">
-                        <span className="font-semibold">Reparto Principal:</span> {pelicula.actores?.join(', ') || 'No disponible'}
+                        <span className="font-semibold">Reparto Principal:</span> {Array.isArray(pelicula.actores) ? pelicula.actores.join(', ') : (pelicula.actores || 'No disponible')}
                     </div>
 
                     <hr className="my-4 border-t border-gray-300" />

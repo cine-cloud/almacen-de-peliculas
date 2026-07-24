@@ -224,7 +224,7 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
                                 {esAdministrador && (
                                     <button
                                         onClick={() => onEditar?.(pelicula)}
-                                        className="btn btn-warning rounded-full btn-sm"
+                                        className="btn btn-primary rounded-full btn-sm"
                                     >
                                         Editar
                                     </button>
