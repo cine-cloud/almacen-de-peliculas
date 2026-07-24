@@ -1,6 +1,7 @@
-// hooks/KeycloakProvider.jsx
+
 import { useState, useEffect, createContext } from 'react';
 import keycloak from '../config/keycloak.js';
+import { setAuthToken } from "@/services/api/auth";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const KeycloakContext = createContext();
@@ -12,8 +13,6 @@ const KeycloakProvider = ({ children }) => {
     useEffect(() => {
         const initKeycloak = async () => {
             try {
-                console.log('Inicializando Keycloak...');
-
                 const auth = await keycloak.init({
                     onLoad: 'check-sso',
                     silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
@@ -22,34 +21,39 @@ const KeycloakProvider = ({ children }) => {
                     enableLogging: true
                 });
 
-                console.log('Keycloak inicializado. Autenticado:', auth);
-
                 setAuthenticated(auth);
                 setInitialized(true);
 
+                if (auth) {
+                    setAuthToken(keycloak.token);
+                }
+
                 keycloak.onAuthSuccess = () => {
-                    console.log('Auth Success');
                     setAuthenticated(true);
+                    setAuthToken(keycloak.token);
                 };
 
                 keycloak.onAuthError = () => {
-                    console.log('Auth Error');
                     setAuthenticated(false);
                 };
 
                 keycloak.onAuthLogout = () => {
-                    console.log('Auth Logout');
                     setAuthenticated(false);
+                    setAuthToken(null);
                 };
 
                 keycloak.onTokenExpired = () => {
-                    keycloak.updateToken(30).catch(() => {
-                        setAuthenticated(false);
-                    });
+                    keycloak.updateToken(30)
+                        .then(() => {
+                            setAuthToken(keycloak.token);
+                        })
+                        .catch(() => {
+                            setAuthenticated(false);
+                            setAuthToken(null);
+                        });
                 };
 
             } catch (error) {
-                console.error('Error inicializando Keycloak:', error);
                 setInitialized(true);
                 setAuthenticated(false);
             }

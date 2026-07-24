@@ -4,6 +4,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faShareNodes, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { peliculaService } from '@/services/peliculaService';
 import { useCart } from '@/hooks/useCart.jsx';
+import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
+import { useKeycloak } from "@/hooks/useKeycloak.js";
 
 const MovieDetail = () => {
     const { id } = useParams();
@@ -12,6 +14,7 @@ const MovieDetail = () => {
     const [error, setError] = useState(null);
     const [showSuccess, setShowSuccess] = useState(false);
     const { addToCart } = useCart();
+    const { isAdmin } = useKeycloak();
 
     useEffect(() => {
         const cargarPelicula = async () => {
@@ -99,18 +102,22 @@ const MovieDetail = () => {
             <div className="bg-neutral p-6 rounded-2xl shadow-xl lg:flex lg:gap-8">
                 <div className="lg:w-1/3">
                     <img
-                        src={'/src/assets/' + pelicula.imagenAmpliada || '/scr/assets/movie-4.jpg'}
-                        alt={pelicula.titulo}
-                        className="w-full rounded-2xl shadow-lg mb-4"
+                      src={pelicula.imagenAmpliada || imagenNoDisponible}
+                      alt={pelicula.titulo}
+                      onError={(e) => {
+                         e.target.src = imagenNoDisponible;
+                      }}
                     />
                     <div className="flex flex-col gap-2 mt-4">
-                        <button className="btn btn-primary rounded-full">Ver ahora</button>
-                        <button
-                            className="btn btn-outline btn-secondary rounded-full"
-                            onClick={handleAddToCart}
-                        >
-                            Añadir al carrito
-                        </button>
+                        {!isAdmin() && <button className="btn btn-primary rounded-full">Ver ahora</button>}
+                        {!isAdmin() && (
+                            <button
+                                className="btn btn-outline btn-secondary rounded-full"
+                                onClick={handleAddToCart}
+                            >
+                                Añadir al carrito
+                            </button>
+                        )}
 
                         <div className="flex gap-2">
                             <button className="btn flex-1 btn-outline btn-secondary rounded-full hover:text-primary-content">
@@ -150,10 +157,10 @@ const MovieDetail = () => {
 
                     <h3 className="text-lg font-semibold text-accent mb-1">Reparto y Equipo</h3>
                     <div className="text-sm text-gray-700 mb-2">
-                        <span className="font-semibold">Directores:</span> {pelicula.directores?.join(', ') || 'No disponible'}
+                        <span className="font-semibold">Directores:</span> {Array.isArray(pelicula.directores) ? pelicula.directores.join(', ') : (pelicula.director || 'No disponible')}
                     </div>
                     <div className="text-sm text-gray-700 mb-4">
-                        <span className="font-semibold">Reparto Principal:</span> {pelicula.actores?.join(', ') || 'No disponible'}
+                        <span className="font-semibold">Reparto Principal:</span> {Array.isArray(pelicula.actores) ? pelicula.actores.join(', ') : (pelicula.actores || 'No disponible')}
                     </div>
 
                     <hr className="my-4 border-t border-gray-300" />

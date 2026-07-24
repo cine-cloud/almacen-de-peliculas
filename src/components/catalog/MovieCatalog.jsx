@@ -1,32 +1,51 @@
-import {useEffect, useState} from 'react';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import SearchBar from "../shared/SearchBar.jsx";
-import {peliculaService} from '@/services/peliculaService';
-import { useKeycloak} from "@/hooks/useKeycloak.js";
+import { peliculaService } from '@/services/peliculaService';
+import { useKeycloak } from "@/hooks/useKeycloak.js";
+import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
+import { useCart } from '@/hooks/useCart.jsx';
+import { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 
-const MovieCatalog = () => {
+const MovieCatalog = forwardRef(({ onEditar }, ref) => {
     const [peliculas, setPeliculas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { keycloak, initialized } = useKeycloak();
+    const { keycloak, initialized, isAdmin } = useKeycloak();  
+    const esAdministrador = initialized && isAdmin();
+    console.log("Debug esAdministrador:", {
+        initialized,
+        authenticated: keycloak?.authenticated,
+        roles: keycloak?.tokenParsed?.realm_access?.roles,
+        isAdminResult: isAdmin ? isAdmin() : "no-function",
+        esAdministrador
+    });
+    const { addToCart } = useCart();
+    const cargarCatalogos = async () => {
+        try {
+            setLoading(true);
+
+            const data = await peliculaService.listar();
+
+            setPeliculas(data);
+            setError(null);
+
+        } catch (err) {
+            console.error("Error al cargar catálogo:", err);
+            setError("Error al cargar el catálogo");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useImperativeHandle(ref, () => ({
+        reload() {
+            cargarCatalogos();
+        }
+    }));
 
     useEffect(() => {
-        // No esperar autenticación - cargar siempre
-        const cargarCatalogos = async () => {
-            try {
-                setLoading(true);
-                const data = await peliculaService.listar();
-                setPeliculas(data);
-            } catch (err) {
-                console.error('Error al cargar catálogos:', err);
-                setError('Error al cargar el catálogo');
-            } finally {
-                setLoading(false);
-            }
-        };
-
         cargarCatalogos();
-    }, []); // Eliminada la dependencia de authenticated
+    }, []);
 
     // Solo esperar inicialización de Keycloak, no autenticación
     if (!initialized) {
@@ -95,14 +114,14 @@ const MovieCatalog = () => {
             {/* Sección de bienvenida para usuarios no autenticados */}
             {!keycloak.authenticated && (
                 <div className="alert alert-info alert-soft mb-6">
-                    <div className="flex items-center justify-between" style={{ 'font-size': '1rem'}}>
+                    <div className="flex items-center justify-between" style={{ 'font-size': '1rem' }}>
                         <div>
                             <span className="font-bold text-primary">¡Bienvenido!</span>
                             <span className="ml-2 text-primary">Explora nuestro catálogo. Inicia sesión para más funciones.</span>
                         </div>
                         <button
                             onClick={() => keycloak.login()}
-                            style={{ 'font-size': '1rem'}}
+                            style={{ 'font-size': '1rem' }}
                             className="btn btn-ghost btn-sm text-primary"
                         >
                             Iniciar Sesión
@@ -133,9 +152,12 @@ const MovieCatalog = () => {
                                         className="block"
                                     >
                                         <img
-                                            src={'/src/assets/' + pelicula.imagenAmpliada || '/src/assets/movie-4.jpg'}
-                                            className="w-full h-96 object-cover rounded-box"
+                                            src={pelicula.imagenAmpliada || imagenNoDisponible}
                                             alt={pelicula.titulo}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.src = imagenNoDisponible;
+                                            }}
                                         />
                                     </Link>
                                 ))}
@@ -170,9 +192,12 @@ const MovieCatalog = () => {
                     >
                         <figure className="relative h-64 overflow-hidden rounded-t-2xl">
                             <img
-                                src={'/src/assets/' + pelicula.imagenAmpliada || '/src/assets/movie-4.jpg'}
+                                src={pelicula.imagenAmpliada || imagenNoDisponible}
                                 alt={pelicula.titulo}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.target.src = imagenNoDisponible;
+                                }}
                             />
                             <div className="badge badge-primary absolute top-2 right-2 text-xs font-semibold">
                                 Novedad
@@ -186,24 +211,30 @@ const MovieCatalog = () => {
                                 <span className="font-semibold">Directores:</span> {pelicula.directores?.join(', ') || 'No disponible'}
                             </div>
                             <div className="flex items-center gap-1 text-sm text-gray-700">
-                                <span className="font-semibold">Actores:</span> {pelicula.actores?.slice(0, 3).join(', ')}...
+                                <span className="font-semibold">Actores:</span> {pelicula.actores || "No disponible"}
                             </div>
                             <div className="flex justify-between items-center mt-4">
+
                                 <Link
                                     to={`/pelicula/${pelicula.peliculaId}`}
                                     className="btn btn-primary rounded-full btn-sm"
                                 >
                                     Ver detalles
                                 </Link>
-                                {!keycloak.authenticated ? (
+                                {esAdministrador && (
                                     <button
-                                        onClick={() => keycloak.login()}
+                                        onClick={() => onEditar?.(pelicula)}
+                                        className="btn btn-primary rounded-full btn-sm"
+                                    >
+                                        Editar
+                                    </button>
+                                )}
+
+                                {!isAdmin() && (
+                                    <button
+                                        onClick={() => addToCart(pelicula)}
                                         className="btn btn-outline btn-secondary rounded-full btn-sm"
                                     >
-                                        Iniciar sesión
-                                    </button>
-                                ) : (
-                                    <button className="btn btn-outline btn-secondary rounded-full btn-sm">
                                         Comprar
                                     </button>
                                 )}
@@ -214,6 +245,6 @@ const MovieCatalog = () => {
             </div>
         </div>
     );
-};
+});
 
 export default MovieCatalog;
