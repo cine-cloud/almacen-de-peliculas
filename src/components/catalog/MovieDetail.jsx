@@ -12,7 +12,7 @@ const MovieDetail = () => {
     const [pelicula, setPelicula] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [showSuccess, setShowSuccess] = useState(false);
+    const [notification, setNotification] = useState(null);
     const { addToCart } = useCart();
     const { isAdmin } = useKeycloak();
 
@@ -35,14 +35,14 @@ const MovieDetail = () => {
         }
     }, [id]);
 
-    const handleAddToCart = () => {
-        addToCart(pelicula);
-        setShowSuccess(true);
-
-        // Ocultar el mensaje después de 3 segundos
-        setTimeout(() => {
-            setShowSuccess(false);
-        }, 3000);
+    const handleAddToCart = async () => {
+        const res = await addToCart(pelicula);
+        if (res) {
+            setNotification(res);
+            setTimeout(() => {
+                setNotification(null);
+            }, 3500);
+        }
     };
 
     // Helper para generar estrellas de rating
@@ -87,12 +87,12 @@ const MovieDetail = () => {
 
     return (
         <div className="container mx-auto p-4">
-            {/* Notificación de éxito */}
-            {showSuccess && (
+            {/* Notificación de éxito o error de stock */}
+            {notification && (
                 <div className="toast toast-top toast-end z-50">
-                    <div className="alert alert-success alert-soft flex">
+                    <div className={`alert ${notification.success ? 'alert-success' : 'alert-error text-white'} alert-soft flex shadow-xl border border-border`}>
                         <FontAwesomeIcon icon={faCheckCircle} className="text-lg" />
-                        <span className="font-semibold">¡Se ha añadido al carrito!</span>
+                        <span className="font-semibold">{notification.message}</span>
                     </div>
                 </div>
             )}
@@ -111,12 +111,21 @@ const MovieDetail = () => {
                     <div className="flex flex-col gap-2 mt-4">
                         {!isAdmin() && <button className="btn btn-primary rounded-full">Ver ahora</button>}
                         {!isAdmin() && (
-                            <button
-                                className="btn btn-outline btn-secondary rounded-full"
-                                onClick={handleAddToCart}
-                            >
-                                Añadir al carrito
-                            </button>
+                            pelicula.stock != null && pelicula.stock > 0 ? (
+                                <button
+                                    className="btn btn-outline btn-secondary rounded-full"
+                                    onClick={handleAddToCart}
+                                >
+                                    Añadir al carrito
+                                </button>
+                            ) : (
+                                <button
+                                    disabled
+                                    className="btn btn-disabled rounded-full cursor-not-allowed opacity-60"
+                                >
+                                    Sin stock
+                                </button>
+                            )
                         )}
 
                         <div className="flex gap-2">
@@ -130,13 +139,22 @@ const MovieDetail = () => {
                     </div>
                 </div>
                 <div className="lg:w-2/3 mt-6 lg:mt-0">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <div className="badge badge-outline badge-secondary font-semibold">
                             {pelicula.generos?.join(', ') || 'Sin género'}
                         </div>
                         <div className="badge badge-accent text-neutral font-semibold">
                             {pelicula.condicion}
                         </div>
+                        {pelicula.stock != null && pelicula.stock > 0 ? (
+                            <div className="badge badge-success font-semibold">
+                                Stock disponible: {pelicula.stock} unidades
+                            </div>
+                        ) : (
+                            <div className="badge badge-error text-white font-semibold">
+                                Sin stock
+                            </div>
+                        )}
                     </div>
                     <h1 className="text-4xl font-bold text-accent mb-2">{pelicula.titulo}</h1>
                     <p className="text-gray-500 mb-4">
@@ -157,10 +175,10 @@ const MovieDetail = () => {
 
                     <h3 className="text-lg font-semibold text-accent mb-1">Reparto y Equipo</h3>
                     <div className="text-sm text-gray-700 mb-2">
-                        <span className="font-semibold">Directores:</span> {pelicula.directores?.join(', ') || 'No disponible'}
+                        <span className="font-semibold">Directores:</span> {Array.isArray(pelicula.directores) ? pelicula.directores.join(', ') : (pelicula.director || 'No disponible')}
                     </div>
                     <div className="text-sm text-gray-700 mb-4">
-                        <span className="font-semibold">Reparto Principal:</span> {pelicula.actores || "No disponible"}
+                        <span className="font-semibold">Reparto Principal:</span> {Array.isArray(pelicula.actores) ? pelicula.actores.join(', ') : (pelicula.actores || 'No disponible')}
                     </div>
 
                     <hr className="my-4 border-t border-gray-300" />

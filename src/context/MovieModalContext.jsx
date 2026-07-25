@@ -5,19 +5,24 @@ const MovieModalContext = createContext();
 export function MovieModalProvider({ children }) {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [peliculaSeleccionada, setPeliculaSeleccionada] = useState(null);
 
-    const openModal = () => {
+    const openModal = (pelicula = null) => {
+        setPeliculaSeleccionada(pelicula);
         setIsModalOpen(true);
     };
 
     const closeModal = () => {
         setIsModalOpen(false);
+        setPeliculaSeleccionada(null);
     };
 
     return (
         <MovieModalContext.Provider
             value={{
                 isModalOpen,
+                peliculaSeleccionada,
+                setPeliculaSeleccionada,
                 openModal,
                 closeModal
             }}

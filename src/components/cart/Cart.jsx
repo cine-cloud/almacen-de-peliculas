@@ -4,13 +4,13 @@ import { faTrash, faPlus, faMinus, faShoppingCart, faCreditCard, faTruck } from 
 import { Link } from 'react-router-dom';
 import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
 import { carritoService } from "@/services/carritoService";
-import { useContext, useState } from "react";
+import { useEffect, useContext, useState } from "react";
 import { KeycloakContext } from "../../hooks/KeycloakProvider";
 import { descuentoService } from "@/services/descuentoService";
 
 
 const Cart = () => {
-    const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
+    const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal, refetchCart } = useCart();
     
     const { authenticated, login, keycloak, isAdmin } = useContext(KeycloakContext);
 
@@ -18,6 +18,12 @@ const Cart = () => {
     const [descuentoAplicado, setDescuentoAplicado] = useState(null);
     const [descuentoError, setDescuentoError] = useState("");
     const [descuentoSuccess, setDescuentoSuccess] = useState("");
+
+    useEffect(() => {
+        if (refetchCart) {
+            refetchCart();
+        }
+    }, []);
 
     const handleApplyDescuento = async () => {
         setDescuentoError("");
@@ -91,13 +97,31 @@ const Cart = () => {
         localStorage.removeItem("carritoId");       
 
     } catch (error) {        
-
         if (error.response) {
             console.log("STATUS:", error.response.status);
             console.log("DATA:", error.response.data);
         }
 
-        alert("Error al procesar la compra");
+        const data = error.response?.data;
+        let mensajeError = "Error al procesar la compra";
+
+        if (typeof data === 'string' && data.trim()) {
+            mensajeError = data;
+        } else if (data && typeof data === 'object') {
+            if (data.message && data.message !== "Bad Request") {
+                mensajeError = data.message;
+            } else if (data.reason && data.reason !== "Bad Request") {
+                mensajeError = data.reason;
+            } else if (data.error && data.error !== "Bad Request") {
+                mensajeError = data.error;
+            } else if (data.message === "Bad Request" || data.error === "Bad Request" || error.response?.status === 400) {
+                mensajeError = "Stock insuficiente para realizar la compra";
+            }
+        } else if (error.message) {
+            mensajeError = error.message;
+        }
+
+        alert(mensajeError);
     }
 };
 

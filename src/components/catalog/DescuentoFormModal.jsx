@@ -49,6 +49,16 @@ export default function DescuentoFormModal({ isOpen, onClose, onSave, descuento 
     }));
   };
 
+  const isFormValid = () => {
+    if (!formData.codigo.trim()) return false;
+    if (!formData.descripcion.trim()) return false;
+    if (!formData.monto || isNaN(parseFloat(formData.monto)) || parseFloat(formData.monto) <= 0 || parseFloat(formData.monto) > 100) return false;
+    if (!formData.fechaDesde) return false;
+    if (!formData.fechaHasta) return false;
+    if (new Date(formData.fechaHasta) < new Date(formData.fechaDesde)) return false;
+    return true;
+  };
+
   const validateForm = () => {
     if (!formData.codigo.trim()) {
       return "El código de descuento es obligatorio.";
@@ -103,10 +113,9 @@ export default function DescuentoFormModal({ isOpen, onClose, onSave, descuento 
       onSave();
       onClose();
     } catch (err) {
-      console.error("Error al guardar descuento:", err);
       const backendMessage =
         err.response?.data?.message ||
-        err.response?.data ||
+        (typeof err.response?.data === 'string' ? err.response.data : null) ||
         "Ocurrió un error al procesar la solicitud. Verifica que el código no esté duplicado.";
       setError(backendMessage);
     } finally {
@@ -144,64 +153,64 @@ export default function DescuentoFormModal({ isOpen, onClose, onSave, descuento 
             </div>
           )}
 
-          {/* Código */}
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text font-semibold text-accent">Código de Cupón</span>
-            </label>
-            <input
-              type="text"
-              name="codigo"
-              value={formData.codigo}
-              onChange={handleChange}
-              placeholder="Ej: PRIMAVERA15"
-              className="input input-bordered w-full font-mono focus:input-primary text-accent bg-base-100"
-              disabled={isEditing} // Generalmente los códigos no se editan una vez creados para evitar problemas de consistencia
-              maxLength={30}
-              required
-            />
-          </div>
-
-          {/* Descripción */}
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text font-semibold text-accent">Descripción</span>
-            </label>
-            <textarea
-              name="descripcion"
-              value={formData.descripcion}
-              onChange={handleChange}
-              placeholder="Ej: Disfruta un 15% de descuento en todas las películas durante julio"
-              className="textarea textarea-bordered w-full focus:textarea-primary min-h-[80px] text-accent bg-base-100"
-              maxLength={255}
-              required
-            />
-          </div>
-
-          {/* Monto (Porcentaje) */}
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text font-semibold text-accent">Descuento (%)</span>
-            </label>
-            <input
-              type="number"
-              name="monto"
-              value={formData.monto}
-              onChange={handleChange}
-              placeholder="Ej: 15"
-              min="1"
-              max="100"
-              step="0.01"
-              className="input input-bordered w-full focus:input-primary text-accent bg-base-100"
-              required
-            />
-          </div>
-
-          {/* Fechas (Rango) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text font-semibold text-accent">Fecha Inicio</span>
+            {/* Código */}
+            <div className="flex flex-col gap-1.5 col-span-1 sm:col-span-2">
+              <label className="text-sm font-semibold text-accent">
+                Código de Cupón <span className="text-error">*</span>
+              </label>
+              <input
+                type="text"
+                name="codigo"
+                value={formData.codigo}
+                onChange={handleChange}
+                placeholder="Ej: PRIMAVERA15"
+                className="input input-bordered w-full font-mono focus:input-primary text-accent bg-base-100"
+                disabled={isEditing}
+                maxLength={30}
+                required
+              />
+            </div>
+
+            {/* Descripción */}
+            <div className="flex flex-col gap-1.5 col-span-1 sm:col-span-2">
+              <label className="text-sm font-semibold text-accent">
+                Descripción <span className="text-error">*</span>
+              </label>
+              <textarea
+                name="descripcion"
+                value={formData.descripcion}
+                onChange={handleChange}
+                placeholder="Ej: Disfruta un 15% de descuento en todas las películas durante julio"
+                className="textarea textarea-bordered w-full focus:textarea-primary min-h-[80px] text-accent bg-base-100"
+                maxLength={255}
+                required
+              />
+            </div>
+
+            {/* Monto (Porcentaje) */}
+            <div className="flex flex-col gap-1.5 col-span-1 sm:col-span-2">
+              <label className="text-sm font-semibold text-accent">
+                Descuento (%) <span className="text-error">*</span>
+              </label>
+              <input
+                type="number"
+                name="monto"
+                value={formData.monto}
+                onChange={handleChange}
+                placeholder="Ej: 15"
+                min="1"
+                max="100"
+                step="0.01"
+                className="input input-bordered w-full focus:input-primary text-accent bg-base-100"
+                required
+              />
+            </div>
+
+            {/* Fecha Inicio */}
+            <div className="flex flex-col gap-1.5 col-span-1">
+              <label className="text-sm font-semibold text-accent">
+                Fecha Inicio <span className="text-error">*</span>
               </label>
               <input
                 type="date"
@@ -213,9 +222,10 @@ export default function DescuentoFormModal({ isOpen, onClose, onSave, descuento 
               />
             </div>
 
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text font-semibold text-accent">Fecha Fin</span>
+            {/* Fecha Fin */}
+            <div className="flex flex-col gap-1.5 col-span-1">
+              <label className="text-sm font-semibold text-accent">
+                Fecha Fin <span className="text-error">*</span>
               </label>
               <input
                 type="date"
@@ -241,7 +251,7 @@ export default function DescuentoFormModal({ isOpen, onClose, onSave, descuento 
             <button
               type="submit"
               className="btn btn-primary cursor-pointer"
-              disabled={loading}
+              disabled={loading || !isFormValid()}
             >
               {loading ? (
                 <>

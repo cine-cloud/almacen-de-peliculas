@@ -3,6 +3,7 @@ import { useState, useEffect, createContext } from 'react';
 import keycloak from '../config/keycloak.js';
 import { setAuthToken } from "@/services/api/auth";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const KeycloakContext = createContext();
 
 const KeycloakProvider = ({ children }) => {
