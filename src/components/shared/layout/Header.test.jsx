@@ -21,6 +21,14 @@ vi.mock('@/hooks/useCart.jsx', () => ({
     }),
 }));
 
+vi.mock('@/context/MovieModalContext', () => ({
+    useMovieModal: () => ({
+        openModal: vi.fn(),
+        closeModal: vi.fn(),
+        isModalOpen: false,
+    }),
+}));
+
 describe('Componente Header', () => {
     it('debe renderizar el título de la aplicación "Cine Cloud"', () => {
         render(
@@ -29,7 +37,7 @@ describe('Componente Header', () => {
             </MemoryRouter>
         );
 
-        expect(screen.getByText('Cine Cloud')).toBeInTheDocument();
+        expect(screen.getByAltText('Logo Cine Cloud')).toBeInTheDocument();
     });
 
     it('debe mostrar el botón de Iniciar Sesión cuando el usuario no está autenticado', () => {

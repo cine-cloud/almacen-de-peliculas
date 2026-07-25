@@ -10,7 +10,7 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
     const [peliculas, setPeliculas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { keycloak, initialized, isAdmin } = useKeycloak();  
+    const { keycloak, initialized, isAdmin } = useKeycloak();
     const esAdministrador = initialized && isAdmin();
     console.log("Debug esAdministrador:", {
         initialized,
@@ -220,9 +220,6 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
                                     e.target.src = imagenNoDisponible;
                                 }}
                             />
-                            <div className="badge badge-primary absolute top-2 right-2 text-xs font-semibold">
-                                Novedad
-                            </div>
                         </figure>
                         <div className="card-body p-4">
                             <h3 className="card-title text-accent text-lg">{pelicula.titulo}</h3>
@@ -235,11 +232,13 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
                                     <span className="badge badge-error badge-sm text-white font-semibold">Sin stock</span>
                                 )}
                             </div>
-                            <div className="flex items-center gap-1 text-sm text-gray-700 mt-2">
-                                <span className="font-semibold">Directores:</span> {pelicula.directores?.join(', ') || 'No disponible'}
+                            <div className="flex items-start gap-1.5 text-sm text-gray-700 mt-2">
+                                <span className="font-semibold shrink-0">Directores:</span>
+                                <span>{pelicula.directores?.join(', ') || 'No disponible'}</span>
                             </div>
-                            <div className="flex items-center gap-1 text-sm text-gray-700">
-                                <span className="font-semibold">Actores:</span> {pelicula.actores || "No disponible"}
+                            <div className="flex items-start gap-1.5 text-sm text-gray-700">
+                                <span className="font-semibold shrink-0">Actores:</span>
+                                <span>{pelicula.actores || "No disponible"}</span>
                             </div>
                             <div className="flex justify-between items-center mt-4">
 

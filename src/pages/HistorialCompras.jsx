@@ -59,7 +59,7 @@ function HistorialCompras() {
         <p className="text-gray-500">
           Inicia sesión para visualizar el historial de compras.
         </p>
-        <Link to="/" className="btn btn-primary">
+        <Link to="/" className="btn btn-ghost text-primary">
           Volver al Catálogo
         </Link>
       </div>
@@ -69,7 +69,7 @@ function HistorialCompras() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-4">
-        <Link to="/" className="btn btn-outline btn-sm">
+        <Link to="/" className="btn btn-ghost text-primary">
           ← Volver al catálogo
         </Link>
       </div>

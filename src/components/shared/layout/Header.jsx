@@ -4,15 +4,17 @@ import { faCrown, faFilm, faSignOutAlt, faUser, faUsers, faSignInAlt, faUserPlus
 import { useKeycloak } from "@/hooks/useKeycloak.js";
 import { faShoppingCart } from '@fortawesome/free-solid-svg-icons';
 import { useCart } from '@/hooks/useCart.jsx';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useMovieModal } from "@/context/MovieModalContext";
 
 export default function Header() {
 
   const { keycloak, initialized, authenticated, isAdmin, isCliente } = useKeycloak();
   const { getCartItemsCount } = useCart();
-  const { openModal } = useMovieModal();
+  const { isModalOpen, openModal } = useMovieModal();
   const navigate = useNavigate();
+  const location = useLocation();
+
   // Verificar permisos basados en Realm Roles
   const canAddMovies = authenticated && isAdmin();
 
@@ -58,6 +60,9 @@ export default function Header() {
     );
   }
 
+  const isDescuentosActive = location.pathname === "/admin/descuentos";
+  const isHistorialActive = location.pathname === "/historial";
+
   return (
     <header className="sticky top-0 z-10 bg-base-100 shadow-sm">
       <div className="flex items-center justify-between px-4 py-1">
@@ -76,7 +81,9 @@ export default function Header() {
           {canAddMovies && (
             <button
               onClick={handleAddMovie}
-              className="btn btn-primary btn-sm flex items-center gap-2"
+              className={`btn btn-sm flex items-center gap-2 ${
+                isModalOpen ? "btn-primary" : "btn-outline btn-primary"
+              }`}
             >
               <FontAwesomeIcon icon={faFilm} />
               Agregar Película
@@ -87,7 +94,9 @@ export default function Header() {
           {canAddMovies && (
             <Link
               to="/admin/descuentos"
-              className="btn btn-primary btn-sm flex items-center gap-2"
+              className={`btn btn-sm flex items-center gap-2 ${
+                isDescuentosActive ? "btn-primary" : "btn-outline btn-primary"
+              }`}
             >
               <FontAwesomeIcon icon={faTag} />
               Gestionar Descuentos
@@ -110,7 +119,9 @@ export default function Header() {
           {authenticated && (
             <Link
               to="/historial"
-              className="btn btn-outline btn-primary btn-sm"
+              className={`btn btn-sm flex items-center gap-2 ${
+                isHistorialActive ? "btn-primary" : "btn-outline btn-primary"
+              }`}
             >
               Historial
             </Link>
@@ -124,11 +135,13 @@ export default function Header() {
                 role="button"
                 className="btn btn-ghost btn-circle avatar flex items-center justify-center"
               >
-                <div className="w-8 rounded-full bg-primary text-primary-content flex items-center justify-center">
-                  {keycloak.tokenParsed?.preferred_username?.[0]?.toUpperCase() ||
-                    keycloak.tokenParsed?.given_name?.[0]?.toUpperCase() || (
-                      <FontAwesomeIcon icon={faUser} />
-                    )}
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center text-center font-semibold leading-none">
+                  <span className="flex items-center justify-center">
+                    {keycloak.tokenParsed?.preferred_username?.[0]?.toUpperCase() ||
+                      keycloak.tokenParsed?.given_name?.[0]?.toUpperCase() || (
+                        <FontAwesomeIcon icon={faUser} />
+                      )}
+                  </span>
                 </div>
               </div>
               <ul

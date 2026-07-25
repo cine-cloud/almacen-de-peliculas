@@ -7,22 +7,20 @@ import { peliculaService } from "@/services/peliculaService";
 
 export default function CatalogPage() {
 
-    const { isModalOpen, openModal, closeModal } = useMovieModal();
+    const { isModalOpen, peliculaSeleccionada, openModal, closeModal } = useMovieModal();
     const catalogRef = useRef(null);
-    const [peliculaSeleccionada, setPeliculaSeleccionada] = useState(null);
     const [toastMessage, setToastMessage] = useState("");
 
     const handleEditar = async (pelicula) => {
         try {
             const peliculaCompleta = await peliculaService.obtenerDetalle(pelicula.peliculaId);
-            setPeliculaSeleccionada(peliculaCompleta);
-            openModal();
+            openModal(peliculaCompleta);
         } catch (error) {
             console.error("Error al obtener detalle de la película", error);
         }
     };
 
-    const handleCloseModal = () => { setPeliculaSeleccionada(null); closeModal(); };
+    const handleCloseModal = () => { closeModal(); };
 
     const handleSaveSuccess = (movieData, isEdition) => {
         const msg = isEdition 

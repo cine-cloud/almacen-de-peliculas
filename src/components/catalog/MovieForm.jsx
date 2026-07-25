@@ -49,33 +49,44 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
     const { keycloak } = useKeycloak();
 
     useEffect(() => {
+        if (pelicula) {
+            setFormData({
+                titulo: pelicula.titulo || "",
+                fechaSalida: pelicula.fechaSalida || "",
+                precio: pelicula.precio || "",
+                stock: pelicula.stock ?? "",
+                imagenAmpliada: pelicula.imagenAmpliada || "",
 
-        if (!pelicula) return;
+                director: pelicula.director
+                    || (Array.isArray(pelicula.directores) ? pelicula.directores.join(", ") : "")
+                    || "",
 
-        console.log("Condición recibida:", pelicula.condicion);
+                actores: pelicula.actores
+                    || (Array.isArray(pelicula.actoresDetalle) ? pelicula.actoresDetalle.map(a => a.nombre).join(", ") : "")
+                    || "",
 
-        setFormData({
-            titulo: pelicula.titulo || "",
-            fechaSalida: pelicula.fechaSalida || "",
-            precio: pelicula.precio || "",
-            stock: pelicula.stock ?? "",
-            imagenAmpliada: pelicula.imagenAmpliada || "",
+                generosDetalle: pelicula.generosDetalle || [],
 
-            director: pelicula.director
-                || (Array.isArray(pelicula.directores) ? pelicula.directores.join(", ") : "")
-                || "",
-
-            actores: pelicula.actores
-                || (Array.isArray(pelicula.actoresDetalle) ? pelicula.actoresDetalle.map(a => a.nombre).join(", ") : "")
-                || "",
-
-            generosDetalle: pelicula.generosDetalle || [],
-
-            condicion: pelicula.condicion || "",
-            sinopsis: pelicula.sinopsis || "",
-            formato: pelicula.formato || ""
-        });
-
+                condicion: pelicula.condicion || "",
+                sinopsis: pelicula.sinopsis || "",
+                formato: pelicula.formato || ""
+            });
+        } else {
+            setFormData({
+                titulo: "",
+                fechaSalida: "",
+                precio: "",
+                stock: "",
+                director: "",
+                actores: "",
+                generosDetalle: [],
+                imagenAmpliada: "",
+                condicion: "",
+                sinopsis: "",
+                formato: ""
+            });
+        }
+        setErrors({});
     }, [pelicula]);
 
     useEffect(() => {
@@ -112,6 +123,27 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
         if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+    };
+
+    const isFormValid = () => {
+        return (
+            formData.titulo?.trim().length > 0 &&
+            Boolean(formData.fechaSalida) &&
+            formData.precio !== "" &&
+            !isNaN(Number(formData.precio)) &&
+            Number(formData.precio) > 0 &&
+            formData.stock !== "" &&
+            !isNaN(Number(formData.stock)) &&
+            Number(formData.stock) >= 0 &&
+            formData.director?.trim().length > 0 &&
+            formData.actores?.trim().length > 0 &&
+            Array.isArray(formData.generosDetalle) &&
+            formData.generosDetalle.length > 0 &&
+            formData.imagenAmpliada?.trim().length > 0 &&
+            formData.sinopsis?.trim().length > 0 &&
+            Boolean(formData.formato) &&
+            Boolean(formData.condicion)
+        );
     };
 
     const validateForm = () => {
@@ -232,7 +264,7 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                 </div>
             )}
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Vista previa */}
                     <div className="card bg-base-200 shadow-md">
                         <div className="card-body">
@@ -253,8 +285,10 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                                 )}
                             </div>
 
-                            <label className="form-control w-full mt-4">
-                                <span className="label-text">URL de la imagen *</span>
+                            <div className="flex flex-col gap-1.5 w-full mt-4">
+                                <label className="text-sm font-semibold text-base-content">
+                                    URL de la imagen <span className="text-error">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     className={`input input-bordered w-full ${errors.imagenAmpliada ? "input-error" : ""
@@ -264,14 +298,14 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                                     onChange={(e) => handleInputChange("imagenAmpliada", e.target.value)}
                                 />
                                 {errors.imagenAmpliada && (
-                                    <p className="text-error text-sm">{errors.imagenAmpliada}</p>
+                                    <p className="text-error text-xs font-medium">{errors.imagenAmpliada}</p>
                                 )}
-                            </label>
+                            </div>
                         </div>
                     </div>
 
                     {/* Formulario principal */}
-                    <div className="card bg-base-200 shadow-md lg:col-span-2">
+                    <div className="card bg-base-200 shadow-md">
                         <div className="card-body space-y-4">
                             <h2 className="card-title">Información de la Película</h2>
 
@@ -281,75 +315,80 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                                 </div>
                             )}
 
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <label className="form-control">
-                                    <span className="label-text">Título *</span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-1.5 w-full">
+                                    <label className="text-sm font-semibold text-base-content">
+                                        Título <span className="text-error">*</span>
+                                    </label>
                                     <input
                                         type="text"
-                                        className={`input input-bordered ${errors.titulo ? "input-error" : ""
+                                        className={`input input-bordered w-full ${errors.titulo ? "input-error" : ""
                                             }`}
                                         value={formData.titulo}
                                         onChange={(e) => handleInputChange("titulo", e.target.value)}
                                     />
                                     {errors.titulo && (
-                                        <p className="text-error text-sm">{errors.titulo}</p>
+                                        <p className="text-error text-xs font-medium">{errors.titulo}</p>
                                     )}
-                                </label>
+                                </div>
 
-                                <label className="form-control">
-                                    <span className="label-text">Fecha de estreno *</span>
+                                <div className="flex flex-col gap-1.5 w-full">
+                                    <label className="text-sm font-semibold text-base-content">
+                                        Fecha de estreno <span className="text-error">*</span>
+                                    </label>
                                     <input
                                         type="date"
-                                        className={`input input-bordered ${errors.fechaSalida ? "input-error" : ""
+                                        className={`input input-bordered w-full ${errors.fechaSalida ? "input-error" : ""
                                             }`}
                                         value={formData.fechaSalida}
                                         onChange={(e) => handleInputChange("fechaSalida", e.target.value)}
                                     />
                                     {errors.fechaSalida && (
-                                        <p className="text-error text-sm">{errors.fechaSalida}</p>
+                                        <p className="text-error text-xs font-medium">{errors.fechaSalida}</p>
                                     )}
-                                </label>
+                                </div>
 
-                                <label className="form-control">
-                                    <span className="label-text">Precio ($) *</span>
+                                <div className="flex flex-col gap-1.5 w-full">
+                                    <label className="text-sm font-semibold text-base-content">
+                                        Precio ($) <span className="text-error">*</span>
+                                    </label>
                                     <input
                                         type="number"
                                         min="0"
                                         step="0.01"
-                                        className={`input input-bordered ${errors.precio ? "input-error" : ""
+                                        className={`input input-bordered w-full ${errors.precio ? "input-error" : ""
                                             }`}
                                         value={formData.precio}
                                         onChange={(e) => handleInputChange("precio", e.target.value)}
                                     />
                                     {errors.precio && (
-                                        <p className="text-error text-sm">{errors.precio}</p>
+                                        <p className="text-error text-xs font-medium">{errors.precio}</p>
                                     )}
-                                </label>
+                                </div>
 
-                                <label className="form-control">
-                                    <span className="label-text">Stock disponible *</span>
-
+                                <div className="flex flex-col gap-1.5 w-full">
+                                    <label className="text-sm font-semibold text-base-content">
+                                        Stock disponible <span className="text-error">*</span>
+                                    </label>
                                     <input
                                         type="number"
                                         min="0"
-                                        className={`input input-bordered ${errors.stock ? "input-error" : ""
+                                        className={`input input-bordered w-full ${errors.stock ? "input-error" : ""
                                             }`}
                                         value={formData.stock}
                                         onChange={(e) => handleInputChange("stock", e.target.value)}
                                     />
-
                                     {errors.stock && (
-                                        <p className="text-error text-sm">
+                                        <p className="text-error text-xs font-medium">
                                             {errors.stock}
                                         </p>
                                     )}
-                                </label>
+                                </div>
 
-                                <label className="form-control col-span-1 lg:col-span-2">
-                                    <span className="label-text font-medium mb-1">
-                                        Géneros * <span className="text-xs text-base-content/60">(Puedes seleccionar varios)</span>
-                                    </span>
-
+                                <div className="flex flex-col gap-1.5 w-full col-span-1 md:col-span-2">
+                                    <label className="text-sm font-semibold text-base-content">
+                                        Géneros <span className="text-error">*</span> <span className="text-xs font-normal text-base-content/60">(Puedes seleccionar varios)</span>
+                                    </label>
                                     <div className={`p-3 rounded-lg border min-h-[52px] flex flex-wrap gap-2 items-center ${
                                         errors.genero ? "border-error bg-error/5" : "border-base-300 bg-base-100"
                                     }`}>
@@ -387,14 +426,16 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                                     </div>
 
                                     {errors.genero && (
-                                        <p className="text-error text-sm mt-1">{errors.genero}</p>
+                                        <p className="text-error text-xs font-medium mt-1">{errors.genero}</p>
                                     )}
-                                </label>
+                                </div>
 
-                                <label className="form-control">
-                                    <span className="label-text">Formato *</span>
+                                <div className="flex flex-col gap-1.5 w-full">
+                                    <label className="text-sm font-semibold text-base-content">
+                                        Formato <span className="text-error">*</span>
+                                    </label>
                                     <select
-                                        className={`select select-bordered ${errors.formato ? "select-error" : ""
+                                        className={`select select-bordered w-full ${errors.formato ? "select-error" : ""
                                             }`}
                                         value={formData.formato}
                                         onChange={(e) => handleInputChange("formato", e.target.value)}
@@ -405,14 +446,16 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                                         ))}
                                     </select>
                                     {errors.formato && (
-                                        <p className="text-error text-sm">{errors.formato}</p>
+                                        <p className="text-error text-xs font-medium">{errors.formato}</p>
                                     )}
-                                </label>
+                                </div>
 
-                                <label className="form-control">
-                                    <span className="label-text">Condición *</span>
+                                <div className="flex flex-col gap-1.5 w-full">
+                                    <label className="text-sm font-semibold text-base-content">
+                                        Condición <span className="text-error">*</span>
+                                    </label>
                                     <select
-                                        className={`select select-bordered ${errors.condicion ? "select-error" : ""
+                                        className={`select select-bordered w-full ${errors.condicion ? "select-error" : ""
                                             }`}
                                         value={formData.condicion}
                                         onChange={(e) => handleInputChange("condicion", e.target.value)}
@@ -423,74 +466,76 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                                         ))}
                                     </select>
                                     {errors.condicion && (
-                                        <p className="text-error text-sm">{errors.condicion}</p>
+                                        <p className="text-error text-xs font-medium">{errors.condicion}</p>
                                     )}
-                                </label>
-                            </div>
+                                </div>
 
-                            <label className="form-control">
-                                <span className="label-text">Director(es) *</span>
+                                <div className="flex flex-col gap-1.5 w-full col-span-1 md:col-span-2">
+                                    <label className="text-sm font-semibold text-base-content">
+                                        Director(es) <span className="text-error">*</span>
+                                    </label>
 
-                                <input
-                                    type="text"
-                                    className={`input input-bordered ${errors.director ? "input-error" : ""
-                                        }`}
-                                    placeholder="Ej: Martin Scorsese, Francis Ford Coppola"
-                                    value={formData.director}
-                                    onChange={(e) =>
-                                        handleInputChange("director", e.target.value)
-                                    }
-                                />
+                                    <input
+                                        type="text"
+                                        className={`input input-bordered w-full ${errors.director ? "input-error" : ""
+                                            }`}
+                                        placeholder="Ej: Martin Scorsese, Francis Ford Coppola"
+                                        value={formData.director}
+                                        onChange={(e) =>
+                                            handleInputChange("director", e.target.value)
+                                        }
+                                    />
 
-                                <label className="label">
-                                    <span className="label-text-alt">
+                                    <span className="text-xs text-base-content/60">
                                         Si hay más de un director, separalos con comas.
                                     </span>
-                                </label>
 
-                                {errors.director && (
-                                    <p className="text-error text-sm">{errors.director}</p>
-                                )}
-                            </label>
+                                    {errors.director && (
+                                        <p className="text-error text-xs font-medium">{errors.director}</p>
+                                    )}
+                                </div>
 
-                            <label className="form-control">
-                                <span className="label-text">Actores principales *</span>
+                                <div className="flex flex-col gap-1.5 w-full col-span-1 md:col-span-2">
+                                    <label className="text-sm font-semibold text-base-content">
+                                        Actores principales <span className="text-error">*</span>
+                                    </label>
 
-                                <textarea
-                                    rows={3}
-                                    className={`textarea textarea-bordered ${errors.actores ? "textarea-error" : ""
-                                        }`}
-                                    placeholder="Ej: Leonardo DiCaprio, Samuel L. Jackson, Morgan Freeman"
-                                    value={formData.actores}
-                                    onChange={(e) =>
-                                        handleInputChange("actores", e.target.value)
-                                    }
-                                />
+                                    <textarea
+                                        rows={3}
+                                        className={`textarea textarea-bordered w-full ${errors.actores ? "textarea-error" : ""
+                                            }`}
+                                        placeholder="Ej: Leonardo DiCaprio, Samuel L. Jackson, Morgan Freeman"
+                                        value={formData.actores}
+                                        onChange={(e) =>
+                                            handleInputChange("actores", e.target.value)
+                                        }
+                                    />
 
-                                <label className="label">
-                                    <span className="label-text-alt">
+                                    <span className="text-xs text-base-content/60">
                                         Separá los actores con comas.
                                     </span>
-                                </label>
 
-                                {errors.actores && (
-                                    <p className="text-error text-sm">{errors.actores}</p>
-                                )}
-                            </label>
+                                    {errors.actores && (
+                                        <p className="text-error text-xs font-medium">{errors.actores}</p>
+                                    )}
+                                </div>
 
-                            <label className="form-control">
-                                <span className="label-text">Sinopsis *</span>
-                                <textarea
-                                    className={`textarea textarea-bordered resize-none ${errors.sinopsis ? "textarea-error" : ""
-                                        }`}
-                                    rows={4}
-                                    value={formData.sinopsis}
-                                    onChange={(e) => handleInputChange("sinopsis", e.target.value)}
-                                />
-                                {errors.sinopsis && (
-                                    <p className="text-error text-sm">{errors.sinopsis}</p>
-                                )}
-                            </label>
+                                <div className="flex flex-col gap-1.5 w-full col-span-1 md:col-span-2">
+                                    <label className="text-sm font-semibold text-base-content">
+                                        Sinopsis <span className="text-error">*</span>
+                                    </label>
+                                    <textarea
+                                        className={`textarea textarea-bordered w-full resize-none ${errors.sinopsis ? "textarea-error" : ""
+                                            }`}
+                                        rows={4}
+                                        value={formData.sinopsis}
+                                        onChange={(e) => handleInputChange("sinopsis", e.target.value)}
+                                    />
+                                    {errors.sinopsis && (
+                                        <p className="text-error text-xs font-medium">{errors.sinopsis}</p>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -510,7 +555,7 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                     <button
                         type="submit"
                         className="btn btn-primary"
-                        disabled={loading}
+                        disabled={loading || !isFormValid()}
                     >
                         {loading ? (
                             <span className="loading loading-spinner"></span>
