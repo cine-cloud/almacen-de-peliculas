@@ -160,7 +160,7 @@ const MovieDetail = () => {
                         <span className="font-semibold">Directores:</span> {pelicula.directores?.join(', ') || 'No disponible'}
                     </div>
                     <div className="text-sm text-gray-700 mb-4">
-                        <span className="font-semibold">Reparto Principal:</span> {pelicula.actores?.join(', ') || 'No disponible'}
+                        <span className="font-semibold">Reparto Principal:</span> {pelicula.actores || "No disponible"}
                     </div>
 
                     <hr className="my-4 border-t border-gray-300" />

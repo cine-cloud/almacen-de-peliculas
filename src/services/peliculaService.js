@@ -13,6 +13,21 @@ export const peliculaService = {
     }
   },
 
+  buscar: async (query) => {
+    try {
+      const response = await api.get("/peliculas/buscar", {
+        params: {
+          query,
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error("Error al buscar películas:", error);
+      throw error;
+    }
+  }, 
+
   // Obtener detalle de una película
   obtenerDetalle: async (id) => {
     try {

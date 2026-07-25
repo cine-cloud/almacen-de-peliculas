@@ -10,7 +10,8 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
     const [peliculas, setPeliculas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { keycloak, initialized, isAdmin } = useKeycloak();  
+    const [busqueda, setBusqueda] = useState("");
+    const { keycloak, initialized, isAdmin } = useKeycloak();
     const esAdministrador = initialized && isAdmin();
     console.log("Debug esAdministrador:", {
         initialized,
@@ -19,7 +20,9 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
         isAdminResult: isAdmin ? isAdmin() : "no-function",
         esAdministrador
     });
+
     const { addToCart } = useCart();
+
     const cargarCatalogos = async () => {
         try {
             setLoading(true);
@@ -37,6 +40,27 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
         }
     };
 
+    const buscar = async () => {
+        try {
+            if (busqueda.trim() === "") {
+                cargarCatalogos();
+                return;
+            }
+
+            setLoading(true);
+
+            const resultado = await peliculaService.buscar(busqueda);
+
+            setPeliculas(resultado);
+            setError(null);
+        } catch (err) {
+            console.error("Error al buscar películas:", err);
+            setError("Error al buscar películas");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useImperativeHandle(ref, () => ({
         reload() {
             cargarCatalogos();
@@ -46,6 +70,12 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
     useEffect(() => {
         cargarCatalogos();
     }, []);
+
+    useEffect(() => {
+        if (busqueda.trim() === "") {
+            cargarCatalogos();
+        }
+    }, [busqueda]);
 
     // Solo esperar inicialización de Keycloak, no autenticación
     if (!initialized) {
@@ -107,7 +137,11 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
                         )}
                     </div>
 
-                    <SearchBar />
+                    <SearchBar
+                        valor={busqueda}
+                        onChange={setBusqueda}
+                        onBuscar={buscar}
+                    />
                 </div>
             </div>
 
