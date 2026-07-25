@@ -121,19 +121,35 @@ export const CartProvider = ({ children }) => {
     }, [authenticated]);
 
     const addToCart = async (movie) => {
-
         const roles = keycloak?.tokenParsed?.realm_access?.roles || [];
         if (roles.includes("admin")) {
-            return;
+            return { success: false, message: "Los administradores no pueden agregar productos al carrito." };
+        }
+
+        const stockDisponible = movie?.stock ?? 0;
+        if (stockDisponible <= 0) {
+            return {
+                success: false,
+                message: `No hay stock disponible para "${movie?.titulo || 'esta película'}".`
+            };
+        }
+
+        const itemExistente = cart.find(i => i.peliculaId === movie.peliculaId);
+        const cantidadEnCarrito = itemExistente ? itemExistente.quantity : 0;
+
+        if (cantidadEnCarrito + 1 > stockDisponible) {
+            return {
+                success: false,
+                message: `Solo hay ${stockDisponible} unidad(es) disponible(s) de "${movie.titulo}". Ya tienes ${cantidadEnCarrito} en tu carrito.`
+            };
         }
 
         try {
-
             const carritoId = localStorage.getItem("carritoId");
 
             if (!carritoId) {
                 console.error("No existe carrito.");
-                return;
+                return { success: false, message: "No se encontró una sesión de carrito activa." };
             }
 
             await carritoService.agregarItem(
@@ -155,13 +171,13 @@ export const CartProvider = ({ children }) => {
             );
 
             console.log("Película agregada al carrito.");
+            return { success: true, message: `¡"${movie.titulo}" agregada al carrito!` };
 
         } catch (error) {
-
             console.error("Error agregando al carrito:", error);
-
+            const msg = error.response?.data?.message || "No se pudo agregar la película al carrito.";
+            return { success: false, message: msg };
         }
-
     };
 
     const removeFromCart = async (movieId) => {

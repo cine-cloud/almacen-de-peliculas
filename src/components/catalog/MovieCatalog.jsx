@@ -20,6 +20,18 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
         esAdministrador
     });
     const { addToCart } = useCart();
+    const [notification, setNotification] = useState(null);
+
+    const handleComprar = async (pelicula) => {
+        const res = await addToCart(pelicula);
+        if (res) {
+            setNotification(res);
+            setTimeout(() => {
+                setNotification(null);
+            }, 3500);
+        }
+    };
+
     const cargarCatalogos = async () => {
         try {
             setLoading(true);
@@ -89,6 +101,15 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
 
     return (
         <div className="container mx-auto p-4">
+            {/* Toast de notificación de stock / carrito */}
+            {notification && (
+                <div className="toast toast-top toast-end z-50">
+                    <div className={`alert ${notification.success ? 'alert-success' : 'alert-error text-white'} alert-soft flex shadow-xl border border-border`}>
+                        <span className="font-semibold text-sm">{notification.message}</span>
+                    </div>
+                </div>
+            )}
+
             <div className="bg-card border-border">
                 <div className="container mx-auto px-6 py-8">
                     <div className="text-center mb-8">
@@ -206,8 +227,15 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
                         <div className="card-body p-4">
                             <h3 className="card-title text-accent text-lg">{pelicula.titulo}</h3>
                             <p className="text-sm text-gray-600">Fecha de salida: {pelicula.fechaSalida}</p>
-                            <p className="text-lg font-bold text-primary">${pelicula.precio}</p>
-                            <div className="flex items-center gap-1 text-sm text-gray-700">
+                            <div className="flex items-center justify-between mt-1">
+                                <span className="text-lg font-bold text-primary">${pelicula.precio}</span>
+                                {pelicula.stock != null && pelicula.stock > 0 ? (
+                                    <span className="badge badge-success badge-sm font-semibold">Stock: {pelicula.stock}</span>
+                                ) : (
+                                    <span className="badge badge-error badge-sm text-white font-semibold">Sin stock</span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-gray-700 mt-2">
                                 <span className="font-semibold">Directores:</span> {pelicula.directores?.join(', ') || 'No disponible'}
                             </div>
                             <div className="flex items-center gap-1 text-sm text-gray-700">
@@ -231,12 +259,21 @@ const MovieCatalog = forwardRef(({ onEditar }, ref) => {
                                 )}
 
                                 {!isAdmin() && (
-                                    <button
-                                        onClick={() => addToCart(pelicula)}
-                                        className="btn btn-outline btn-secondary rounded-full btn-sm"
-                                    >
-                                        Comprar
-                                    </button>
+                                    pelicula.stock != null && pelicula.stock > 0 ? (
+                                        <button
+                                            onClick={() => handleComprar(pelicula)}
+                                            className="btn btn-outline btn-secondary rounded-full btn-sm"
+                                        >
+                                            Comprar
+                                        </button>
+                                    ) : (
+                                        <button
+                                            disabled
+                                            className="btn btn-disabled btn-sm rounded-full cursor-not-allowed opacity-60"
+                                        >
+                                            Sin stock
+                                        </button>
+                                    )
                                 )}
                             </div>
                         </div>
