@@ -68,9 +68,9 @@ export const attachAuthInterceptor = (axiosInstance) => {
   axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
-      if (error.response?.status === 401 && keycloak && keycloak.authenticated) {
+      if (error.response?.status === 401 && keycloak && keycloak.authenticated && !error.config?._retry) {
+        error.config._retry = true;
         try {
-          // Intentar forzar actualización del token si devolvió 401
           const refreshed = await keycloak.updateToken(-1);
           if (refreshed && error.config) {
             error.config.headers.Authorization = `Bearer ${keycloak.token}`;
