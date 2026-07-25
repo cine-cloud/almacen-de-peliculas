@@ -4,13 +4,13 @@ import { faTrash, faPlus, faMinus, faShoppingCart, faCreditCard, faTruck } from 
 import { Link } from 'react-router-dom';
 import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
 import { carritoService } from "@/services/carritoService";
-import { useContext, useState } from "react";
+import { useEffect, useContext, useState } from "react";
 import { KeycloakContext } from "../../hooks/KeycloakProvider";
 import { descuentoService } from "@/services/descuentoService";
 
 
 const Cart = () => {
-    const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
+    const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal, refetchCart } = useCart();
     
     const { authenticated, login, keycloak, isAdmin } = useContext(KeycloakContext);
 
@@ -18,6 +18,12 @@ const Cart = () => {
     const [descuentoAplicado, setDescuentoAplicado] = useState(null);
     const [descuentoError, setDescuentoError] = useState("");
     const [descuentoSuccess, setDescuentoSuccess] = useState("");
+
+    useEffect(() => {
+        if (refetchCart) {
+            refetchCart();
+        }
+    }, []);
 
     const handleApplyDescuento = async () => {
         setDescuentoError("");

@@ -232,12 +232,23 @@ export const CartProvider = ({ children }) => {
         setCart([]);
     };
 
-    const getCartTotal = () => {
-        return cart.reduce((total, item) => total + (item.precio * item.quantity), 0);
-    };
-
-    const getCartItemsCount = () => {
-        return cart.reduce((total, item) => total + item.quantity, 0);
+    const refetchCart = async () => {
+        const carritoId = localStorage.getItem("carritoId");
+        if (!carritoId) return;
+        try {
+            const carrito = await carritoService.obtenerCarrito(carritoId);
+            setCart(
+                carrito.items.map(item => ({
+                    peliculaId: item.peliculaId,
+                    titulo: item.tituloSnapshot,
+                    imagenUrl: item.imagenUrl,
+                    precio: item.precioUnitario,
+                    quantity: item.cantidad
+                }))
+            );
+        } catch (error) {
+            console.error("Error refrescando carrito:", error);
+        }
     };
 
     const value = {
@@ -247,7 +258,8 @@ export const CartProvider = ({ children }) => {
         updateQuantity,
         clearCart,
         getCartTotal,
-        getCartItemsCount
+        getCartItemsCount,
+        refetchCart
     };
 
     return (
