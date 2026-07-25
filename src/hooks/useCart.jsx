@@ -251,6 +251,14 @@ export const CartProvider = ({ children }) => {
         }
     };
 
+    const getCartTotal = () => {
+        return cart.reduce((total, item) => total + (item.precio * item.quantity), 0);
+    };
+
+    const getCartItemsCount = () => {
+        return cart.reduce((total, item) => total + item.quantity, 0);
+    };
+
     const value = {
         cart,
         addToCart,
