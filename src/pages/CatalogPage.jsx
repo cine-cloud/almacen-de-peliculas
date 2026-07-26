@@ -40,10 +40,9 @@ export default function CatalogPage() {
 
             {/* Alerta flotante de éxito (Toast) */}
             {toastMessage && (
-                <div className="fixed top-20 right-6 z-50 animate-bounce">
-                    <div className="alert alert-success text-white shadow-2xl font-bold px-6 py-4 rounded-xl flex items-center gap-3">
-                        <span className="text-xl">✓</span>
-                        <span className="text-base">{toastMessage}</span>
+                <div className="toast toast-top toast-end z-50">
+                    <div className="alert alert-success alert-soft flex shadow-xl border border-border">
+                        <span className="font-semibold text-sm">{toastMessage}</span>
                     </div>
                 </div>
             )}

@@ -259,8 +259,10 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
     return (
         <div className="max-w-4xl mx-auto">
             {successMessage && (
-                <div className="alert alert-success text-success-content shadow-lg flex items-center justify-between font-semibold mb-6 animate-fade-in">
-                    <span>✓ {successMessage}</span>
+                <div className="toast toast-top toast-end z-50">
+                    <div className="alert alert-success alert-soft flex shadow-xl border border-border">
+                        <span className="font-semibold text-sm">{successMessage}</span>
+                    </div>
                 </div>
             )}
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -577,7 +579,7 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-base-100 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-base-300 animate-scale-up">
                         <h3 className="text-lg font-bold text-base-content flex items-center gap-2">
-                            ❓ ¿Confirmar {pelicula ? "actualización" : "creación"}?
+                            ¿Confirmar {pelicula ? "actualización" : "creación"}?
                         </h3>
                         <p className="text-sm text-base-content/80">
                             ¿Estás seguro de que deseas guardar los cambios en la película <strong className="text-primary">{formData.titulo}</strong>?

@@ -120,6 +120,26 @@ export const CartProvider = ({ children }) => {
 
     }, [authenticated]);
 
+    const obtenerOCrearCarritoId = async () => {
+        let carritoId = localStorage.getItem("carritoId");
+        if (carritoId) return carritoId;
+
+        if (authenticated) {
+            const usuarioId = keycloak.tokenParsed?.preferred_username;
+            if (usuarioId) {
+                const carrito = await carritoService.obtenerCarritoUsuario(usuarioId);
+                carritoId = carrito.id;
+                localStorage.setItem("carritoId", carritoId);
+                return carritoId;
+            }
+        }
+
+        const carritoAnonimo = await carritoService.crearCarritoAnonimo();
+        carritoId = carritoAnonimo.id;
+        localStorage.setItem("carritoId", carritoId);
+        return carritoId;
+    };
+
     const addToCart = async (movie) => {
         const roles = keycloak?.tokenParsed?.realm_access?.roles || [];
         if (roles.includes("admin")) {
@@ -145,12 +165,7 @@ export const CartProvider = ({ children }) => {
         }
 
         try {
-            const carritoId = localStorage.getItem("carritoId");
-
-            if (!carritoId) {
-                console.error("No existe carrito.");
-                return { success: false, message: "No se encontró una sesión de carrito activa." };
-            }
+            const carritoId = await obtenerOCrearCarritoId();
 
             await carritoService.agregarItem(
                 carritoId,
@@ -182,7 +197,7 @@ export const CartProvider = ({ children }) => {
 
     const removeFromCart = async (movieId) => {
         try {
-            const carritoId = localStorage.getItem("carritoId");
+            const carritoId = await obtenerOCrearCarritoId();
             await carritoService.eliminarItem(carritoId, movieId);
 
             const carrito = await carritoService.obtenerCarrito(carritoId);
@@ -203,7 +218,7 @@ export const CartProvider = ({ children }) => {
 
     const updateQuantity = async (movieId, newQuantity) => {
         try {
-            const carritoId = localStorage.getItem("carritoId");
+            const carritoId = await obtenerOCrearCarritoId();
             if (newQuantity < 1) {
                 await removeFromCart(movieId);
                 return;
@@ -233,9 +248,8 @@ export const CartProvider = ({ children }) => {
     };
 
     const refetchCart = async () => {
-        const carritoId = localStorage.getItem("carritoId");
-        if (!carritoId) return;
         try {
+            const carritoId = await obtenerOCrearCarritoId();
             const carrito = await carritoService.obtenerCarrito(carritoId);
             setCart(
                 carrito.items.map(item => ({

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faShareNodes, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { peliculaService } from '@/services/peliculaService';
@@ -77,7 +78,15 @@ const MovieDetail = () => {
     if (error || !pelicula) {
         return (
             <div className="container mx-auto p-4">
-                <Link to="/" className="btn btn-ghost mb-4 text-primary">&larr; Volver al catálogo</Link>
+                <div className="flex items-center border-b border-stone-200 pb-4 mb-6">
+                    <Link
+                        to="/"
+                        className="flex items-center gap-2 text-stone-600 hover:text-primary transition-colors text-sm font-medium"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span>Volver al Catálogo</span>
+                    </Link>
+                </div>
                 <div className="alert alert-error">
                     {error || 'Película no encontrada.'}
                 </div>
@@ -97,7 +106,15 @@ const MovieDetail = () => {
                 </div>
             )}
 
-            <Link to="/" className="btn btn-ghost mb-4 text-primary">&larr; Volver al catálogo</Link>
+            <div className="flex items-center border-b border-stone-200 pb-4 mb-6">
+                <Link
+                    to="/"
+                    className="flex items-center gap-2 text-stone-600 hover:text-primary transition-colors text-sm font-medium"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Volver al Catálogo</span>
+                </Link>
+            </div>
 
             <div className="bg-neutral p-6 rounded-2xl shadow-xl lg:flex lg:gap-8">
                 <div className="lg:w-1/3">

@@ -133,10 +133,10 @@ export default function Header() {
               <div
                 tabIndex={0}
                 role="button"
-                className="btn btn-ghost btn-circle avatar flex items-center justify-center"
+                className="btn btn-ghost btn-circle flex items-center justify-center"
               >
-                <div className="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center text-center font-semibold leading-none">
-                  <span className="flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-primary text-primary-content grid place-items-center font-bold text-sm leading-none">
+                  <span>
                     {keycloak.tokenParsed?.preferred_username?.[0]?.toUpperCase() ||
                       keycloak.tokenParsed?.given_name?.[0]?.toUpperCase() || (
                         <FontAwesomeIcon icon={faUser} />

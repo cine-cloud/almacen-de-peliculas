@@ -74,8 +74,12 @@ export const carritoService = {
     return response.data;
   },
 
-  checkout: async (idCarrito, descuentoMonto) => {
-    const url = `/carritos/checkout/${idCarrito}${descuentoMonto ? `?descuentoMonto=${descuentoMonto}` : ""}`;
+  checkout: async (idCarrito, descuentoMonto, codigoDescuento) => {
+    let url = `/carritos/checkout/${idCarrito}`;
+    const params = new URLSearchParams();
+    if (descuentoMonto != null) params.append("descuentoMonto", descuentoMonto);
+    if (codigoDescuento) params.append("codigoDescuento", codigoDescuento);
+    if (params.toString()) url += `?${params.toString()}`;
     const response = await carritoApi.post(url);
 
     return response.data;

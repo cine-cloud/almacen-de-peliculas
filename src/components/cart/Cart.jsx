@@ -2,6 +2,7 @@ import { useCart } from '@/hooks/useCart.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlus, faMinus, faShoppingCart, faCreditCard, faTruck } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
 import { carritoService } from "@/services/carritoService";
 import { useEffect, useContext, useState } from "react";
@@ -11,13 +12,16 @@ import { descuentoService } from "@/services/descuentoService";
 
 const Cart = () => {
     const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal, refetchCart } = useCart();
-    
-    const { authenticated, login, keycloak, isAdmin } = useContext(KeycloakContext);
+
+    const { authenticated, login, register, keycloak, isAdmin } = useContext(KeycloakContext);
 
     const [codigoDescuento, setCodigoDescuento] = useState("");
     const [descuentoAplicado, setDescuentoAplicado] = useState(null);
     const [descuentoError, setDescuentoError] = useState("");
     const [descuentoSuccess, setDescuentoSuccess] = useState("");
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+    const [notification, setNotification] = useState(null);
 
     useEffect(() => {
         if (refetchCart) {
@@ -34,9 +38,32 @@ const Cart = () => {
         }
 
         try {
+            const codigoClean = codigoDescuento.trim().toUpperCase();
+
+            // Verificar si el cliente ya utilizó este cupón en alguna compra anterior
+            const usuarioId = keycloak?.tokenParsed?.preferred_username;
+            if (authenticated && usuarioId) {
+                try {
+                    const resHistorial = await fetch(`http://localhost:8083/historial/${usuarioId}`);
+                    if (resHistorial.ok) {
+                        const comprasPasadas = await resHistorial.json();
+                        const yaUsado = comprasPasadas.some(
+                            compra => compra.codigoDescuento && compra.codigoDescuento.trim().toUpperCase() === codigoClean
+                        );
+                        if (yaUsado) {
+                            setDescuentoError(`Ya has utilizado el cupón "${codigoClean}" en una compra anterior. Cada cupón solo puede ser utilizado una única vez por cliente.`);
+                            setDescuentoAplicado(null);
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error al consultar historial para cupones:", err);
+                }
+            }
+
             const cuponesActivos = await descuentoService.listarActivos();
             const cuponEncontrado = cuponesActivos.find(
-                c => c.codigo.trim().toUpperCase() === codigoDescuento.trim().toUpperCase()
+                c => c.codigo.trim().toUpperCase() === codigoClean
             );
 
             if (cuponEncontrado) {
@@ -70,60 +97,71 @@ const Cart = () => {
     const getTotalWithIVA = () => {
         return getSubtotalConDescuento() + calculateIVA();
     };
-    
+
     const procesarPago = async () => {
 
-    try {
+        try {
 
-        if (!authenticated) {
-            login();
-            return;
-        }
-
-        const carritoId = localStorage.getItem("carritoId");
-
-        if (!carritoId) {
-            alert("No existe un carrito activo.");
-            return;
-        }
-
-        const montoDescuento = getDescuentoMonto();
-        await carritoService.checkout(carritoId, montoDescuento);
-
-        alert("Compra realizada correctamente");
-
-        clearCart();
-
-        localStorage.removeItem("carritoId");       
-
-    } catch (error) {        
-        if (error.response) {
-            console.log("STATUS:", error.response.status);
-            console.log("DATA:", error.response.data);
-        }
-
-        const data = error.response?.data;
-        let mensajeError = "Error al procesar la compra";
-
-        if (typeof data === 'string' && data.trim()) {
-            mensajeError = data;
-        } else if (data && typeof data === 'object') {
-            if (data.message && data.message !== "Bad Request") {
-                mensajeError = data.message;
-            } else if (data.reason && data.reason !== "Bad Request") {
-                mensajeError = data.reason;
-            } else if (data.error && data.error !== "Bad Request") {
-                mensajeError = data.error;
-            } else if (data.message === "Bad Request" || data.error === "Bad Request" || error.response?.status === 400) {
-                mensajeError = "Stock insuficiente para realizar la compra";
+            if (!authenticated) {
+                setShowAuthModal(true);
+                return;
             }
-        } else if (error.message) {
-            mensajeError = error.message;
-        }
 
-        alert(mensajeError);
-    }
-};
+            const carritoId = localStorage.getItem("carritoId");
+
+            if (!carritoId) {
+                setNotification({
+                    success: false,
+                    message: "No existe un carrito activo."
+                });
+                setTimeout(() => setNotification(null), 4000);
+                return;
+            }
+
+            const montoDescuento = getDescuentoMonto();
+            await carritoService.checkout(carritoId, montoDescuento, descuentoAplicado?.codigo);
+
+            clearCart();
+            localStorage.removeItem("carritoId");
+            setPurchaseSuccess(true);
+            setNotification({
+                success: true,
+                message: "¡Compra realizada con éxito! Tu pedido ha sido registrado correctamente."
+            });
+            setTimeout(() => setNotification(null), 4000);
+
+        } catch (error) {
+            if (error.response) {
+                console.log("STATUS:", error.response.status);
+                console.log("DATA:", error.response.data);
+            }
+
+            const data = error.response?.data;
+            let mensajeError = "Error al procesar la compra";
+
+            if (typeof data === 'string' && data.trim()) {
+                mensajeError = data;
+            } else if (data && typeof data === 'object') {
+                if (data.message && data.message !== "Bad Request") {
+                    mensajeError = data.message;
+                } else if (data.reason && data.reason !== "Bad Request") {
+                    mensajeError = data.reason;
+                } else if (data.error && data.error !== "Bad Request") {
+                    mensajeError = data.error;
+                } else if (data.message === "Bad Request" || data.error === "Bad Request" || error.response?.status === 400) {
+                    mensajeError = "Stock insuficiente para realizar la compra";
+                }
+            } else if (error.message) {
+                mensajeError = error.message;
+            }
+
+            setNotification({
+                success: false,
+                message: mensajeError
+            });
+            setTimeout(() => setNotification(null), 4000);
+        }
+    };
 
     if (isAdmin && isAdmin()) {
         return (
@@ -135,6 +173,43 @@ const Cart = () => {
                 <Link to="/" className="btn btn-primary">
                     Volver al Catálogo
                 </Link>
+            </div>
+        );
+    }
+
+    if (purchaseSuccess) {
+        return (
+            <div className="container mx-auto p-6 max-w-2xl text-center py-12">
+                {notification && (
+                    <div className="toast toast-top toast-end z-50">
+                        <div className="alert alert-success alert-soft flex shadow-xl border border-border">
+                            <span className="font-semibold text-sm">{notification.message}</span>
+                        </div>
+                    </div>
+                )}
+
+                <div className="bg-base-100 rounded-3xl p-8 shadow-2xl border border-base-300 space-y-6 animate-scale-up">
+                    <div className="w-20 h-20 bg-success/15 text-success rounded-full mx-auto flex items-center justify-center text-4xl font-bold shadow-inner">
+                        ✓
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-3xl font-extrabold text-[#471F16]">
+                            ¡Gracias por tu compra!
+                        </h2>
+                        <p className="text-stone-600 text-base max-w-md mx-auto">
+                            Tu pedido ha sido procesado y registrado correctamente. Puedes revisar el detalle de tu compra en tu historial.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                        <Link to="/historial" className="btn btn-primary font-semibold px-6 shadow-md">
+                            Ver Historial de Compras
+                        </Link>
+                        <Link to="/" className="btn btn-outline border-stone-300 text-stone-700 hover:bg-stone-100 font-semibold px-6">
+                            Volver al Catálogo
+                        </Link>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -156,6 +231,24 @@ const Cart = () => {
 
     return (
         <div className="container mx-auto p-6 max-w-6xl">
+            {notification && (
+                <div className="toast toast-top toast-end z-50">
+                    <div className={`alert ${notification.success ? 'alert-success' : 'alert-error text-white'} alert-soft flex shadow-xl border border-border`}>
+                        <span className="font-semibold text-sm">{notification.message}</span>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex items-center border-b border-stone-200 pb-4 mb-6">
+                <Link
+                    to="/"
+                    className="flex items-center gap-2 text-stone-600 hover:text-primary transition-colors text-sm font-medium"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Volver al Catálogo</span>
+                </Link>
+            </div>
+
             {/* Título y resumen */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-primary mb-2">Carrito de Compras</h1>
@@ -174,7 +267,7 @@ const Cart = () => {
                                     {/* Imagen */}
                                     <div className="flex-shrink-0">
                                         <img
-                                           src={item.imagenUrl || imagenNoDisponible}
+                                            src={item.imagenUrl || imagenNoDisponible}
                                             alt={item.titulo}
                                             className="w-24 h-32 object-cover rounded-lg shadow-md"
                                             onError={(e) => {
@@ -237,7 +330,7 @@ const Cart = () => {
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-xl font-bold text-gray-900">
-                                                   $ {(item.precio * item.quantity)?.toFixed(2) || '12,99'}
+                                                    $ {(item.precio * item.quantity)?.toFixed(2) || '12,99'}
                                                 </p>
                                             </div>
                                         </div>
@@ -371,6 +464,52 @@ const Cart = () => {
                     <p className="text-sm text-gray-600">30 días para cambiar de opinión</p>
                 </div>
             </div>
+
+            {/* Modal de confirmación para usuarios no autenticados */}
+            {showAuthModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-base-100 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-base-300 animate-scale-up text-center">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center text-xl font-bold">
+                            <FontAwesomeIcon icon={faShoppingCart} />
+                        </div>
+                        <h3 className="text-xl font-bold text-base-content">
+                            ¿Deseas continuar con tu compra?
+                        </h3>
+                        <p className="text-sm text-base-content/80">
+                            Para proceder al pago debes estar identificado. Inicia sesión si ya posees una cuenta, o bien regístrate para crear una.
+                        </p>
+                        <div className="flex flex-col gap-3 pt-3">
+                            <button
+                                type="button"
+                                className="btn btn-primary w-full font-semibold"
+                                onClick={() => {
+                                    setShowAuthModal(false);
+                                    login();
+                                }}
+                            >
+                                Iniciar Sesión
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-outline btn-primary w-full font-semibold"
+                                onClick={() => {
+                                    setShowAuthModal(false);
+                                    register();
+                                }}
+                            >
+                                Registrarse
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-ghost btn-sm text-base-content/60 hover:text-base-content"
+                                onClick={() => setShowAuthModal(false)}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
