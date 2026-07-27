@@ -150,7 +150,7 @@ export const CartProvider = ({ children }) => {
         if (stockDisponible <= 0) {
             return {
                 success: false,
-                message: `No hay stock disponible para "${movie?.titulo || 'esta película'}".`
+                message: `No hay stock suficiente "${movie?.titulo || 'esta película'}" para la compra.`
             };
         }
 
@@ -160,7 +160,7 @@ export const CartProvider = ({ children }) => {
         if (cantidadEnCarrito + 1 > stockDisponible) {
             return {
                 success: false,
-                message: `Solo hay ${stockDisponible} unidad(es) disponible(s) de "${movie.titulo}". Ya tienes ${cantidadEnCarrito} en tu carrito.`
+                message: `No hay stock suficiente "${movie.titulo}" para la compra.`
             };
         }
 

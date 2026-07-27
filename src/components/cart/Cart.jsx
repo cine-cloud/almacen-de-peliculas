@@ -41,10 +41,10 @@ const Cart = () => {
             const codigoClean = codigoDescuento.trim().toUpperCase();
 
             // Verificar si el cliente ya utilizó este cupón en alguna compra anterior
-            const usuarioId = keycloak?.tokenParsed?.preferred_username;
+            const usuarioId = keycloak?.tokenParsed?.preferred_username || keycloak?.subject || keycloak?.tokenParsed?.sub;
             if (authenticated && usuarioId) {
                 try {
-                    const resHistorial = await fetch(`http://localhost:8083/historial/${usuarioId}`);
+                    const resHistorial = await fetch(`http://localhost:8080/historial/${usuarioId}`);
                     if (resHistorial.ok) {
                         const comprasPasadas = await resHistorial.json();
                         const yaUsado = comprasPasadas.some(
@@ -137,22 +137,30 @@ const Cart = () => {
             }
 
             const data = error.response?.data;
+            let rawErrorStr = "";
+
+            if (typeof data === 'string') {
+                rawErrorStr = data;
+            } else if (data && typeof data === 'object') {
+                rawErrorStr = [data.detail, data.message, data.reason, data.error].filter(Boolean).join(" ");
+            } else if (error.message) {
+                rawErrorStr = error.message;
+            }
+
             let mensajeError = "Error al procesar la compra";
 
-            if (typeof data === 'string' && data.trim()) {
-                mensajeError = data;
-            } else if (data && typeof data === 'object') {
-                if (data.message && data.message !== "Bad Request") {
-                    mensajeError = data.message;
-                } else if (data.reason && data.reason !== "Bad Request") {
-                    mensajeError = data.reason;
-                } else if (data.error && data.error !== "Bad Request") {
-                    mensajeError = data.error;
-                } else if (data.message === "Bad Request" || data.error === "Bad Request" || error.response?.status === 400) {
-                    mensajeError = "Stock insuficiente para realizar la compra";
-                }
-            } else if (error.message) {
-                mensajeError = error.message;
+            // Intentar extraer el título exacto enviado por el backend
+            const matchQuote = rawErrorStr.match(/No hay stock suficiente "([^"]+)"/i) ||
+                               rawErrorStr.match(/No hay stock suficiente '([^']+)'/i) ||
+                               rawErrorStr.match(/Stock insuficiente para (?:la )?película '([^']+)'/i) ||
+                               rawErrorStr.match(/Stock insuficiente para '([^']+)'/i);
+
+            if (matchQuote && matchQuote[1]) {
+                mensajeError = `No hay stock suficiente "${matchQuote[1]}" para la compra.`;
+            } else if (rawErrorStr.includes("No hay stock suficiente") || rawErrorStr.includes("Stock insuficiente") || error.response?.status === 400) {
+                mensajeError = "No hay stock suficiente para la compra.";
+            } else if (rawErrorStr && !rawErrorStr.includes("Bad Request")) {
+                mensajeError = rawErrorStr;
             }
 
             setNotification({

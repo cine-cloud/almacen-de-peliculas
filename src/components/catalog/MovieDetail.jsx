@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Star } from 'lucide-react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faShareNodes, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { peliculaService } from '@/services/peliculaService';
+import ratingService from '@/services/ratingService';
 import { useCart } from '@/hooks/useCart.jsx';
 import imagenNoDisponible from "../../assets/Imagen_No_Disponible.jpg";
 import { useKeycloak } from "@/hooks/useKeycloak.js";
@@ -14,17 +15,28 @@ const MovieDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [notification, setNotification] = useState(null);
+    const [promedioRating, setPromedioRating] = useState({ promedio: 0, totalVotos: 0 });
+    const [resenas, setResenas] = useState([]);
     const { addToCart } = useCart();
     const { isAdmin } = useKeycloak();
 
     useEffect(() => {
-        const cargarPelicula = async () => {
+        const cargarPeliculaYRatings = async () => {
             try {
                 setLoading(true);
                 const data = await peliculaService.obtenerDetalle(id);
                 setPelicula(data);
+
+                // Cargar promedio y reseñas reales de rating-backend
+                const [promData, listData] = await Promise.all([
+                    ratingService.obtenerPromedioPorPelicula(id),
+                    ratingService.obtenerPorPelicula(id),
+                ]);
+
+                if (promData) setPromedioRating(promData);
+                if (listData) setResenas(listData);
             } catch (err) {
-                console.error('Error al cargar película:', err);
+                console.error('Error al cargar película o ratings:', err);
                 setError('Error al cargar la película');
             } finally {
                 setLoading(false);
@@ -32,7 +44,7 @@ const MovieDetail = () => {
         };
 
         if (id) {
-            cargarPelicula();
+            cargarPeliculaYRatings();
         }
     }, [id]);
 
@@ -46,23 +58,22 @@ const MovieDetail = () => {
         }
     };
 
-    // Helper para generar estrellas de rating
-    const renderStars = (rating) => {
-        const stars = [];
-        for (let i = 0; i < 5; i++) {
-            stars.push(
-                <input
-                    key={i}
-                    type="radio"
-                    name="rating"
-                    className="mask mask-star-2 bg-orange-400"
-                    aria-label={`${i + 1} star`}
-                    checked={i < rating}
-                    readOnly
-                />
-            );
-        }
-        return <div className="rating rating-lg">{stars}</div>;
+    const renderStarsDisplay = (ratingValue) => {
+        const rounded = Math.round(ratingValue);
+        return (
+            <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                        key={star}
+                        className={`w-5 h-5 ${
+                            star <= rounded
+                                ? 'text-amber-400 fill-amber-400'
+                                : 'text-stone-300 fill-stone-100'
+                        }`}
+                    />
+                ))}
+            </div>
+        );
     };
 
     if (loading) {
@@ -124,6 +135,7 @@ const MovieDetail = () => {
                       onError={(e) => {
                          e.target.src = imagenNoDisponible;
                       }}
+                      className="rounded-xl shadow-lg border w-full object-cover"
                     />
                     <div className="flex flex-col gap-2 mt-4">
                         {!isAdmin() && <button className="btn btn-primary rounded-full">Ver ahora</button>}
@@ -177,12 +189,17 @@ const MovieDetail = () => {
                     <p className="text-gray-500 mb-4">
                         Fecha de salida: {pelicula.fechaSalida} | Formato: {pelicula.formato}
                     </p>
-                    <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center gap-3 mb-4">
                         <span className="text-xl font-bold text-primary">${pelicula.precio}</span>
-                        <div>
-                            {renderStars(4)} {/* Rating hardcodeado por ahora */}
+                        <div className="flex items-center gap-2 bg-stone-100 px-3 py-1 rounded-full border border-stone-200">
+                            {renderStarsDisplay(promedioRating.promedio)}
+                            <span className="text-sm font-semibold text-stone-700">
+                                {promedioRating.promedio > 0 ? promedioRating.promedio.toFixed(1) : "Sin calificar"}
+                            </span>
+                            <span className="text-xs text-stone-500">
+                                ({promedioRating.totalVotos} {promedioRating.totalVotos === 1 ? 'voto' : 'votos'})
+                            </span>
                         </div>
-                        <span className="text-sm text-gray-500">(4 de 5 estrellas)</span>
                     </div>
 
                     <hr className="my-4 border-t border-gray-300" />
@@ -200,15 +217,36 @@ const MovieDetail = () => {
 
                     <hr className="my-4 border-t border-gray-300" />
 
-                    <h3 className="text-xl font-semibold text-accent mb-2">Reseñas de Clientes</h3>
-                    {/* Reviews hardcodeadas por ahora */}
-                    <div className="p-4 bg-gray-100 rounded-lg mb-4">
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold">Usuario</span>
-                            <span className="text-gray-500 text-xs">21 de agosto de 2024</span>
+                    <h3 className="text-xl font-semibold text-accent mb-3 flex items-center gap-2">
+                        Reseñas de Clientes ({resenas.length})
+                    </h3>
+                    
+                    {resenas.length === 0 ? (
+                        <div className="p-4 bg-stone-50 rounded-xl border border-stone-200 text-stone-500 italic text-sm">
+                            Aún no hay reseñas registradas para esta película.
                         </div>
-                        <p className="text-gray-700">Excelente película, muy recomendable.</p>
-                    </div>
+                    ) : (
+                        <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                            {resenas.map((resena) => (
+                                <div key={resena.id || resena.fecha} className="p-4 bg-stone-50 rounded-xl border border-stone-200">
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-accent text-sm">{resena.usuarioId}</span>
+                                            {renderStarsDisplay(resena.estrellas)}
+                                        </div>
+                                        {resena.fecha && (
+                                            <span className="text-stone-400 text-xs">
+                                                {new Date(resena.fecha).toLocaleDateString()}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-gray-700 text-sm mt-1">
+                                        {resena.comentario || <span className="italic text-stone-400">Sin comentario escrito.</span>}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

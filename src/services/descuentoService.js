@@ -2,7 +2,7 @@ import axios from "axios";
 import { attachAuthInterceptor } from "@/services/api/auth";
 
 const descuentoApi = axios.create({
-  baseURL: "http://localhost:8084",
+  baseURL: "http://localhost:8080",
 });
 
 attachAuthInterceptor(descuentoApi);
