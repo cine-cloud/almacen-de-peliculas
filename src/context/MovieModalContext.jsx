@@ -32,6 +32,7 @@ export function MovieModalProvider({ children }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useMovieModal() {
     return useContext(MovieModalContext);
 }

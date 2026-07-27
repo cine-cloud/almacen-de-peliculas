@@ -5,14 +5,7 @@ import {
     faTimes,
     faUpload,
 } from "@fortawesome/free-solid-svg-icons";
-import { useKeycloak } from "@/hooks/useKeycloak.js";
 import { peliculaService } from "@/services/peliculaService.js";
-
-
-const genres = [
-    "Acción", "Aventura", "Ciencia Ficción", "Comedia", "Drama",
-    "Terror", "Thriller", "Romance", "Documentales", "Animación",
-];
 
 const formats = [
     "DVD", "Blu-ray", "Blu-ray 4K", "DVD + Digital",
@@ -46,8 +39,6 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
     const [loading, setLoading] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
-    const { keycloak } = useKeycloak();
-
     useEffect(() => {
         if (pelicula) {
             setFormData({
@@ -116,8 +107,8 @@ export default function MovieForm({ pelicula, onSave, onClose }) {
 
     }, []);
 
-    const [actores, setActores] = useState([]);
-    const [directores, setDirectores] = useState([]);
+    const [_actores, setActores] = useState([]);
+    const [_directores, setDirectores] = useState([]);
     const [generos, setGeneros] = useState([]);
 
     const handleInputChange = (field, value) => {

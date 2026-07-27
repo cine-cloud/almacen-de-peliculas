@@ -54,6 +54,7 @@ const KeycloakProvider = ({ children }) => {
                 };
 
             } catch (error) {
+                console.error("Keycloak init error:", error);
                 setInitialized(true);
                 setAuthenticated(false);
             }

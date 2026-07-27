@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, LogOut, Plus, Edit2, Trash2, Tag, Copy, Check } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Plus, Edit2, Trash2, Tag, Copy, Check } from "lucide-react";
 import { useKeycloak } from "@/hooks/useKeycloak";
 import { descuentoService } from "@/services/descuentoService";
 import DescuentoFormModal from "@/components/catalog/DescuentoFormModal";
 
 export default function GestionDescuentos() {
-  const { authenticated, isAdmin, keycloak } = useKeycloak();
-  const navigate = useNavigate();
-
+  const { authenticated, isAdmin } = useKeycloak();
   const [descuentos, setDescuentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState(null);
@@ -135,12 +133,6 @@ export default function GestionDescuentos() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("carritoId");
-    keycloak.logout({
-      redirectUri: window.location.origin,
-    });
-  };
 
   const handleCopyCode = (codigo) => {
     navigator.clipboard.writeText(codigo);
