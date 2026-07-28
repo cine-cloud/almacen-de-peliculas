@@ -29,6 +29,17 @@ const Cart = () => {
         }
     }, []);
 
+    const handleUpdateQuantity = async (peliculaId, newQuantity) => {
+        const res = await updateQuantity(peliculaId, newQuantity);
+        if (res && !res.success && res.message) {
+            setNotification({
+                success: false,
+                message: res.message
+            });
+            setTimeout(() => setNotification(null), 4000);
+        }
+    };
+
     const handleApplyDescuento = async () => {
         setDescuentoError("");
         setDescuentoSuccess("");
@@ -319,7 +330,7 @@ const Cart = () => {
                                                     <span className="text-sm text-gray-600">Cantidad:</span>
                                                     <div className="flex items-center gap-2">
                                                         <button
-                                                            onClick={() => updateQuantity(item.peliculaId, item.quantity - 1)}
+                                                            onClick={() => handleUpdateQuantity(item.peliculaId, item.quantity - 1)}
                                                             className="btn btn-circle btn-sm btn-outline"
                                                         >
                                                             <FontAwesomeIcon icon={faMinus} />
@@ -328,7 +339,7 @@ const Cart = () => {
                                                             {item.quantity}
                                                         </span>
                                                         <button
-                                                            onClick={() => updateQuantity(item.peliculaId, item.quantity + 1)}
+                                                            onClick={() => handleUpdateQuantity(item.peliculaId, item.quantity + 1)}
                                                             className="btn btn-circle btn-sm btn-outline"
                                                         >
                                                             <FontAwesomeIcon icon={faPlus} />

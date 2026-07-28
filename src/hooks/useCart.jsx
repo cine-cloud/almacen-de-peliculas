@@ -221,7 +221,7 @@ export const CartProvider = ({ children }) => {
             const carritoId = await obtenerOCrearCarritoId();
             if (newQuantity < 1) {
                 await removeFromCart(movieId);
-                return;
+                return { success: true };
             }
             await carritoService.actualizarCantidad(
                 carritoId,
@@ -238,8 +238,20 @@ export const CartProvider = ({ children }) => {
                     quantity: item.cantidad
                 }))
             );
+            return { success: true };
         } catch (error) {
             console.error("Error actualizando cantidad:", error);
+            const itemInCart = cart.find(i => i.peliculaId === movieId);
+            const titulo = itemInCart?.titulo || "esta película";
+            const rawMsg = error.response?.data?.message || error.response?.data?.detail || error.message;
+            let msg = `No hay stock suficiente "${titulo}" para la compra.`;
+            if (typeof rawMsg === 'string' && rawMsg.includes("No hay stock suficiente")) {
+                const match = rawMsg.match(/No hay stock suficiente "([^"]+)"/i);
+                if (match && match[1]) {
+                    msg = `No hay stock suficiente "${match[1]}" para la compra.`;
+                }
+            }
+            return { success: false, message: msg };
         }
     };
 
